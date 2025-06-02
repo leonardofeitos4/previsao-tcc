@@ -126,7 +126,7 @@ def main():
     sel_temp_comp = st.multiselect(
         "Selecione as temporadas para comparação:",
         temporadas,
-        default=[sel_ano]  # Define a temporada selecionada inicialmente
+        default=temporadas  # Aqui, seleciona todas as temporadas por padrão
     )
 
     if sel_clubes:

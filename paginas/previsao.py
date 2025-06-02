@@ -87,12 +87,21 @@ def main():
         st.markdown("<h3 class='subheader'>Dados do Clube</h3>", unsafe_allow_html=True)
         with st.form(key="prediction_form"):
             nome_time = st.text_input("Nome do Clube", value="Meu Time")
-            plantel = st.slider("Número de Jogadores no Elenco", min_value=15, max_value=50, value=25, 
-                              help="A média de jogadores nos clubes da Série A é de aproximadamente 28 atletas")
-            estrangeiros = st.slider("Número de Estrangeiros", min_value=0, max_value=15, value=3,
-                                  help="A média de estrangeiros nos clubes da Série A é de aproximadamente 4 atletas")
-            valor_mercado_total = st.slider("Valor de Mercado (em milhões €)", min_value=5.0, max_value=300.0, value=50.0, step=5.0,
-                                         help="A média de valor de mercado dos clubes da Série A é de aproximadamente €85 milhões")
+            plantel = st.slider(
+                "Número de Jogadores no Elenco", 
+                min_value=15, max_value=50, value=25,
+                help="A média de jogadores nos clubes da Série A é de aproximadamente 28 atletas"
+            )
+            estrangeiros = st.slider(
+                "Número de Estrangeiros", 
+                min_value=0, max_value=15, value=3,
+                help="A média de estrangeiros nos clubes da Série A é de aproximadamente 4 atletas"
+            )
+            valor_mercado_total = st.slider(
+                "Valor de Mercado (em milhões €)", 
+                min_value=5.0, max_value=300.0, value=50.0, step=5.0,
+                help="A média de valor de mercado dos clubes da Série A é de aproximadamente €85 milhões"
+            )
             submit_button = st.form_submit_button(label="Analisar Risco de Rebaixamento")
 
     with col2:
@@ -180,13 +189,85 @@ def main():
                     with col_radar:
                         st.markdown("### Perfil do Clube")
                         fig_radar = px.line_polar(
-                            comp_df, r=[plantel/50, estrangeiros/15, valor_mercado_total/300, 1-prob_rebaixamento], 
+                            comp_df, 
+                            r=[plantel/50, estrangeiros/15, valor_mercado_total/300, 1-prob_rebaixamento], 
                             theta=['Tamanho do Elenco', 'Estrangeiros', 'Valor de Mercado', 'Segurança'],
                             line_close=True,
                             range_r=[0, 1]
                         )
                         fig_radar.update_layout(height=300)
                         st.plotly_chart(fig_radar, use_container_width=True)
+
+    # ----------------------------------------------------------
+    #  Ranking Completo com Marcação dos 4 Primeiros como "SIM"
+    # ----------------------------------------------------------
+    st.markdown("---")
+    st.subheader("🏆 Ranking Completo – Probabilidade de Rebaixamento (2025)")
+
+    # 1. Carrega toda a base histórica do Excel
+    file_path = r"dados/BASE_FINAL.xlsx"
+    try:
+        df_base = pd.read_excel(file_path)
+    except FileNotFoundError:
+        st.error(
+            f"Não foi possível encontrar '{file_path}'.\n"
+            "Verifique se o arquivo existe e contém as colunas indicadas."
+        )
+        return
+
+    # 2. Filtra apenas a temporada mais recente (2024) para usar como parâmetro de previsão 2025
+    if "Temporada" not in df_base.columns:
+        st.error("A coluna 'Temporada' não foi encontrada em BASE_FINAL.xlsx.")
+        return
+
+    temporada_mais_recente = df_base["Temporada"].max()
+    df_parametros_2025 = df_base[df_base["Temporada"] == temporada_mais_recente].copy()
+
+    # 3. Verifica se as colunas necessárias existem
+    required_cols = {"Clube", "Plantel", "Estrangeiros", "Valor de Mercado Total"}
+    if not required_cols.issubset(df_parametros_2025.columns):
+        st.error(
+            "A planilha da temporada mais recente deve conter exatamente as colunas:\n"
+            "Clube | Plantel | Estrangeiros | Valor de Mercado Total"
+        )
+        return
+
+    # 4. Chama a previsão para todas as linhas da temporada mais recente
+    previsoes_2025, probs_2025 = fazer_previsao(
+        df_parametros_2025[["Plantel", "Estrangeiros", "Valor de Mercado Total"]]
+    )
+
+    # 5. Monta o DataFrame final com probabilidade
+    df_resultado_2025 = df_parametros_2025[["Clube"]].copy()
+    df_resultado_2025["Prob_Rebaixamento"] = [p[1] for p in probs_2025]
+
+    # 6. Ordena por probabilidade de forma decrescente
+    df_sorted = df_resultado_2025.sort_values(
+        by="Prob_Rebaixamento", ascending=False
+    ).reset_index(drop=True)
+
+    # 7. Marca os 4 primeiros como "Sim" em coluna Rebaixado, os demais como "Não"
+    df_sorted["Rebaixado"] = "Não"
+    df_sorted.loc[:3, "Rebaixado"] = "Sim"
+
+    # 8. Converte a coluna Prob_Rebaixamento para porcentagem arredondada
+    df_sorted["Probabilidade (%)"] = (df_sorted["Prob_Rebaixamento"] * 100).round(2)
+
+    # 9. Seleciona apenas as colunas de exibição
+    df_exibir = df_sorted[["Clube", "Probabilidade (%)", "Rebaixado"]]
+
+    # 10. Exibe o DataFrame completo no Streamlit
+    st.dataframe(df_exibir, use_container_width=True)
+
+    # 11. Destacar em vermelho mais suave os clubes marcados como "Sim"
+    def color_light_red(row):
+        return ["background-color: #FF4C4C"] * len(row) if row["Rebaixado"] == "Sim" else [""] * len(row)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("**(Os 4 primeiros clubes, em vermelho claro, foram marcados como rebaixados)**")
+    styled = df_exibir.style.apply(color_light_red, axis=1)
+    st.write(styled.to_html(), unsafe_allow_html=True)
+
 
 if __name__ == "__main__":
     main()
