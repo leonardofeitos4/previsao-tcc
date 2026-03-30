@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from utils.processamento import carregar_dados
+from app.utils.processamento import carregar_dados
 
 def main():
     st.markdown("<h3 class='subheader'>Base de Dados Histórica</h3>", unsafe_allow_html=True)

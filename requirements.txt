@@ -1,28 +1,26 @@
-# Web Scraping e Processamento (não usados no app de predição, mas OK se o projeto usa)
-Jinja2==3.1.6
-selenium==4.31.0
-beautifulsoup4==4.12.0
-webdriver-manager==4.0.1
+# Interface Web
+streamlit==1.35.0
 
-# Análise de Dados e Machine Learning
-pandas==2.2.2
+# Dados e ML
+pandas==2.1.4
 numpy==1.26.4
 scikit-learn==1.4.2
 joblib==1.4.0
 
 # Visualização
-matplotlib==3.9.0
+matplotlib==3.8.4
 seaborn==0.13.2
 plotly==5.18.0
 
-# Interface Web
-streamlit==1.35.0
+# Excel
+openpyxl==3.1.2
 
-# Dependências adicionais (úteis se o pandas/scikit-learn reclamar falta)
+# Web Scraping
+selenium==4.31.0
+beautifulsoup4==4.12.0
+webdriver-manager==4.0.1
+
+# Compatibilidade
+Jinja2==3.1.6
 python-dateutil>=2.8.2
 pytz>=2020.1
-six>=1.15.0
-typing-extensions>=3.7.4
-
-# Para leitura de arquivos Excel .xlsx
-openpyxl

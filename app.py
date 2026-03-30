@@ -1,35 +1,47 @@
-import streamlit as st
-import os, sys
+"""
+app.py
+------
+Ponto de entrada do aplicativo Streamlit — Previsao de Rebaixamento
+no Brasileirao Serie A 2025.
 
-# Permite importar controllers e páginas
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+Estrutura do projeto:
+    app/controllers/ — configuracao e menu lateral
+    app/paginas/     — paginas do aplicativo
+    app/utils/       — processamento, modelos e estilos
 
-from controllers.config import set_page_configuration, show_title
-from controllers.sidebar import streamlit_menu, sidebar_content
+Autor: Leonardo Feitosa — Ciencia de Dados / UFPB
+"""
 
-from paginas.previsao import main as main_previsao
-from paginas.dados_historicos import main as main_dados
-from paginas.analise_sensibilidade import main as main_analise
-from paginas.analise_descritiva import main as main_descritiva
+import os
+import sys
 
-# Configurações de página: apenas aqui, antes de qualquer st.*
+# Garante que o diretorio raiz do projeto esteja no path de importacao
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from app.controllers.config import set_page_configuration, show_title
+from app.controllers.sidebar import streamlit_menu, sidebar_content
+
+from app.paginas.previsao import main as main_previsao
+from app.paginas.dados_historicos import main as main_dados
+from app.paginas.analise_sensibilidade import main as main_analise
+from app.paginas.analise_descritiva import main as main_descritiva
+
+# Configuracao de pagina — deve vir antes de qualquer outro st.*
 set_page_configuration()
 show_title()
 
 # Menu lateral
 selected_option = streamlit_menu()
 
-# Roteamento das páginas
-if selected_option == 'Previsão':
+# Roteamento de paginas
+if selected_option == "Previsao":
     main_previsao()
-elif selected_option == 'Dados Históricos':
+elif selected_option == "Dados Historicos":
     main_dados()
-elif selected_option == 'Análise de Sensibilidade':
+elif selected_option == "Analise de Sensibilidade":
     main_analise()
-elif selected_option == 'Análise Descritiva':
+elif selected_option == "Analise Descritiva":
     main_descritiva()
 
-# Conteúdo fixo da barra lateral
+# Conteudo fixo da barra lateral
 sidebar_content()
-
-

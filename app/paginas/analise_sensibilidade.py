@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import numpy as np
-from utils.processamento import fazer_previsao
+from app.utils.processamento import fazer_previsao
 
 def main():
     

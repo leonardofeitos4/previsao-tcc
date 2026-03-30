@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import time
 import io
-from utils.processamento import fazer_previsao
+from app.utils.processamento import fazer_previsao
 
 def main():
     # Descrição sobre a ferramenta
