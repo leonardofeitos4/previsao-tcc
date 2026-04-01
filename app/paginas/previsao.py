@@ -1,273 +1,286 @@
+import io
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import time
-import io
-from app.utils.processamento import fazer_previsao
+import plotly.graph_objects as go
+
+from app.utils.processamento import fazer_previsao, carregar_dados_excel
+
+# ── Paleta de cores consistente ──────────────────────────────────────────────
+_AZUL      = "#1e3d59"
+_VERMELHO  = "#e53935"
+_VERDE     = "#27ae60"
+_LARANJA   = "#f57c00"
+_TEMPLATE  = "plotly_white"
+
+
+# ── Helpers ──────────────────────────────────────────────────────────────────
+
+def _cor_e_classe(prob_reb: float):
+    if prob_reb >= 0.6:
+        return "result-danger", "🚨", "Alto risco de rebaixamento"
+    if prob_reb >= 0.35:
+        return "result-warning", "⚠️", "Risco moderado de rebaixamento"
+    return "result-safe", "✅", "Baixo risco de rebaixamento"
+
+
+def _donut(prob_reb: float) -> go.Figure:
+    fig = go.Figure(go.Pie(
+        values=[prob_reb, 1 - prob_reb],
+        labels=["Rebaixamento", "Permanência"],
+        hole=0.72,
+        marker_colors=[_VERMELHO, _VERDE],
+        textinfo="none",
+        hovertemplate="%{label}: %{percent}<extra></extra>",
+    ))
+    fig.add_annotation(
+        text=f"<b>{prob_reb:.1%}</b>",
+        x=0.5, y=0.5, font_size=22, showarrow=False,
+    )
+    fig.update_layout(
+        template=_TEMPLATE,
+        height=260,
+        margin=dict(l=10, r=10, t=10, b=10),
+        showlegend=True,
+        legend=dict(orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5),
+    )
+    return fig
+
+
+def _ranking_bar(df: pd.DataFrame) -> go.Figure:
+    cores = [_VERMELHO if r == "Rebaixado" else _VERDE for r in df["Previsão"]]
+    fig = go.Figure(go.Bar(
+        x=df["Prob. Rebaixamento (%)"],
+        y=df["Clube"],
+        orientation="h",
+        marker_color=cores,
+        text=df["Prob. Rebaixamento (%)"].apply(lambda v: f"{v:.1f}%"),
+        textposition="outside",
+        hovertemplate="<b>%{y}</b><br>Prob. rebaixamento: %{x:.1f}%<extra></extra>",
+    ))
+    fig.add_vline(x=50, line_dash="dash", line_color="gray", opacity=0.5,
+                  annotation_text="50 %", annotation_position="top")
+    fig.update_layout(
+        template=_TEMPLATE,
+        title=dict(text="Ranking de Risco de Rebaixamento — 2025", font_size=14, x=0),
+        xaxis=dict(title="Probabilidade de Rebaixamento (%)", range=[0, 115]),
+        yaxis=dict(title="", autorange="reversed"),
+        height=620,
+        margin=dict(l=160, r=20, t=50, b=40),
+        plot_bgcolor="white",
+    )
+    return fig
+
+
+# ── Página principal ──────────────────────────────────────────────────────────
 
 def main():
-    # Descrição sobre a ferramenta
+    # Info card
     st.markdown("""
-    <div class="card">
-      <h3>📋 Sobre esta ferramenta</h3>
-      <div style="padding: 0 10px;">
-        Este aplicativo utiliza um modelo de <b>Machine Learning</b> (Regressão Logística) treinado com dados históricos do Brasileirão para prever se um clube será <b>rebaixado</b> ou <b>permanecerá</b> na Série A.<br>
-        <b>O modelo considera três fatores principais:</b><br>
-        • Tamanho do elenco<br>
-        • Jogadores estrangeiros<br>
-        • Valor de mercado
-      </div>
+    <div class="info-box">
+        Modelo de <b>Regressão Logística</b> treinado com dados do Transfermarkt (2014–2022) e
+        validado em 2023–2024 &nbsp;(acurácia&nbsp;89&nbsp;%). As previsões são baseadas em
+        <b>tamanho do elenco</b>, <b>nº de estrangeiros</b> e <b>valor de mercado total</b>.
     </div>
     """, unsafe_allow_html=True)
 
-    # Seção para previsão em lote com arquivo CSV
-    st.subheader("Previsão em Lote – Arquivo CSV")
+    tab_sim, tab_rank, tab_lote = st.tabs([
+        "🔮  Simulador Individual",
+        "🏆  Ranking 2025",
+        "📤  Previsão em Lote (CSV)",
+    ])
 
-    # Botão para baixar o template de arquivo CSV
-    template_df = pd.DataFrame({
-        "Plantel": [28, 24],
-        "Estrangeiros": [4, 2],
-        "Valor de Mercado Total": [85.0, 30.0]
-    })
-    csv_buffer = io.StringIO()
-    template_df.to_csv(csv_buffer, index=False)
-    csv_bytes = csv_buffer.getvalue().encode('utf-8')
+    # ── TAB 1: Simulador ─────────────────────────────────────────────────────
+    with tab_sim:
+        col_form, col_res = st.columns([1, 1], gap="large")
 
-    st.download_button(
-        label="📥 Baixar exemplo de arquivo CSV",
-        data=csv_bytes,
-        file_name="template_dados_clubes.csv",
-        mime="text/csv"
-    )
+        with col_form:
+            st.markdown('<p class="section-title">Dados do Clube</p>', unsafe_allow_html=True)
+            with st.form("form_simulador"):
+                nome = st.text_input("Nome do clube", value="Meu Time")
+                plantel = st.slider(
+                    "Tamanho do elenco", 15, 50, 25,
+                    help="Média histórica na Série A: ~28 atletas",
+                )
+                estrangeiros = st.slider(
+                    "Nº de estrangeiros", 0, 15, 3,
+                    help="Média histórica na Série A: ~4 atletas",
+                )
+                valor = st.slider(
+                    "Valor de mercado total (M€)", 5.0, 300.0, 50.0, step=5.0,
+                    help="Média histórica na Série A: ~85 M€",
+                )
+                analisar = st.form_submit_button("Analisar Risco", use_container_width=True)
 
-    # Exibir o formato do arquivo CSV de exemplo
-    with st.expander("Ver formato de exemplo (clique para abrir)"):
-        st.dataframe(template_df, use_container_width=True)
-        st.markdown("""
-        O arquivo CSV deve conter as colunas exatas:<br>
-        <code>Plantel, Estrangeiros, Valor de Mercado Total</code>
-        """, unsafe_allow_html=True)
+        with col_res:
+            st.markdown('<p class="section-title">Resultado da Análise</p>', unsafe_allow_html=True)
 
-    # Uploader de arquivo CSV e exibição da previsão
-    uploaded_file = st.file_uploader(
-        "Faça upload de um arquivo CSV para previsão em lote",
-        type=["csv"]
-    )
+            if analisar:
+                entrada = pd.DataFrame({
+                    "Plantel": [plantel],
+                    "Estrangeiros": [estrangeiros],
+                    "Valor de Mercado Total": [valor],
+                })
+                with st.spinner("Calculando..."):
+                    _, probs = fazer_previsao(entrada)
+                    prob_reb = probs[0][0]   # índice 0 → classe Rebaixado
 
-    if uploaded_file is not None:
-        df_csv = pd.read_csv(uploaded_file)
-        st.info("Pré-visualização dos dados enviados:")
-        st.dataframe(df_csv.head(), use_container_width=True)
+                css_cls, emoji, mensagem = _cor_e_classe(prob_reb)
 
-        with st.spinner('Analisando dados do arquivo...'):
-            previsoes, probabilidades = fazer_previsao(df_csv)
-            df_csv["Probabilidade Rebaixamento (%)"] = [round(p[1]*100,1) for p in probabilidades]
-            df_csv["Resultado"] = ["Rebaixado" if p[1] > 0.5 else "Não Rebaixado" for p in probabilidades]
-        
-        st.success("Resultados das previsões no arquivo:")
-        st.dataframe(df_csv, use_container_width=True)
+                st.markdown(f"""
+                <div class="{css_cls}">
+                    <p class="result-card-title">{nome}</p>
+                    <p class="result-card-value">{prob_reb:.1%}</p>
+                    <p class="result-card-sub">{emoji} {mensagem}</p>
+                </div>
+                """, unsafe_allow_html=True)
 
-        # Gráfico de barras para o lote de previsões
-        if "Probabilidade Rebaixamento (%)" in df_csv.columns and "Resultado" in df_csv.columns:
-            fig_batch = px.bar(
-                df_csv,
-                x=df_csv.index.astype(str),
-                y="Probabilidade Rebaixamento (%)",
-                color="Resultado",
-                title="Probabilidade de Rebaixamento dos Clubes (Arquivo)",
-                labels={"x": "Clube na ordem do arquivo"}
-            )
-            st.plotly_chart(fig_batch, use_container_width=True)
+                st.plotly_chart(_donut(prob_reb), use_container_width=True)
 
-        st.markdown("---")
+                # Métricas nativas
+                m1, m2, m3 = st.columns(3)
+                m1.metric("Plantel", f"{plantel} atletas")
+                m2.metric("Estrangeiros", f"{estrangeiros}")
+                m3.metric("Valor de Mercado", f"{valor:.0f} M€")
 
-    # Formulário para previsão de um clube específico
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        st.markdown("<h3 class='subheader'>Dados do Clube</h3>", unsafe_allow_html=True)
-        with st.form(key="prediction_form"):
-            nome_time = st.text_input("Nome do Clube", value="Meu Time")
-            plantel = st.slider(
-                "Número de Jogadores no Elenco", 
-                min_value=15, max_value=50, value=25,
-                help="A média de jogadores nos clubes da Série A é de aproximadamente 28 atletas"
-            )
-            estrangeiros = st.slider(
-                "Número de Estrangeiros", 
-                min_value=0, max_value=15, value=3,
-                help="A média de estrangeiros nos clubes da Série A é de aproximadamente 4 atletas"
-            )
-            valor_mercado_total = st.slider(
-                "Valor de Mercado (em milhões €)", 
-                min_value=5.0, max_value=300.0, value=50.0, step=5.0,
-                help="A média de valor de mercado dos clubes da Série A é de aproximadamente €85 milhões"
-            )
-            submit_button = st.form_submit_button(label="Analisar Risco de Rebaixamento")
+                # Tabela comparativa
+                st.markdown('<p class="section-title">Comparação com Referências</p>',
+                            unsafe_allow_html=True)
+                comp = pd.DataFrame({
+                    "Clube": [nome, "Média Série A", "Rebaixado Típico", "Top-4 Típico"],
+                    "Plantel": [plantel, 28, 24, 32],
+                    "Estrangeiros": [estrangeiros, 4, 2, 7],
+                    "Valor de Mercado (M€)": [valor, 85, 30, 150],
+                    "Prob. Rebaixamento": [
+                        f"{prob_reb:.1%}", "—", "~70 %", "~5 %"
+                    ],
+                })
+                st.dataframe(comp, hide_index=True, use_container_width=True)
 
-    with col2:
-        st.markdown("<h3 class='subheader'>Resultado da Análise</h3>", unsafe_allow_html=True)
-        result_container = st.container()
-        if submit_button:
-            dados_entrada = {
-                'Plantel': [plantel],
-                'Estrangeiros': [estrangeiros],
-                'Valor de Mercado Total': [valor_mercado_total]
-            }
-            dados_entrada_df = pd.DataFrame(dados_entrada)
-            with st.spinner('Analisando dados...'):
-                time.sleep(1)
-                previsao, probabilidade = fazer_previsao(dados_entrada_df)
-                prob_rebaixamento = probabilidade[0][1]
-                resultado = 'Rebaixado' if prob_rebaixamento > 0.5 else 'Não Rebaixado'
-                
-                # Determinando a cor e a mensagem com base na probabilidade
-                if prob_rebaixamento < 0.3:
-                    cor = "green"
-                    mensagem = "Baixo risco de rebaixamento"
-                    emoji = "✅"
-                elif prob_rebaixamento < 0.7:
-                    cor = "orange"
-                    mensagem = "Risco moderado de rebaixamento"
-                    emoji = "⚠️"
-                else:
-                    cor = "red"
-                    mensagem = "Alto risco de rebaixamento"
-                    emoji = "🚨"
-
-                with result_container:
-                    st.markdown(f"""
-                    <div style="background-color:{cor}; padding:20px; border-radius:10px; text-align:center; color:white;">
-                        <h2>{nome_time}</h2>
-                        <h2>{emoji} {resultado} {emoji}</h2>
-                        <h4>{mensagem}</h4>
-                        <h1 style="font-size:3rem;">{prob_rebaixamento:.1%}</h1>
-                        <p>Probabilidade de Rebaixamento</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    # Exibindo gráfico de pizza
-                    st.markdown('<div style="display: flex; justify-content: center;">', unsafe_allow_html=True)
-                    col_pizza = st.columns([1, 2, 1])[1]
-                    with col_pizza:
-                        fig = px.pie(
-                            values=[prob_rebaixamento, 1-prob_rebaixamento],
-                            names=['Rebaixamento', 'Permanência'],
-                            hole=0.7,
-                            color_discrete_sequence=['#FF5A5F', '#3D9970']
-                        )
-                        fig.update_layout(
-                            title="Probabilidades",
-                            height=300,
-                            width=400,
-                            margin=dict(l=20, r=20, t=30, b=0),
-                            showlegend=True,
-                            legend=dict(orientation="h", yanchor="bottom", y=-0.1, xanchor="center", x=0.5)
-                        )
-                        fig.add_annotation(
-                            text=f"{prob_rebaixamento:.1%}",
-                            x=0.5, y=0.5,
-                            font_size=24,
-                            showarrow=False
-                        )
-                        st.plotly_chart(fig, use_container_width=False)
-                    st.markdown('</div>', unsafe_allow_html=True)
-
-                    # Comparação com outros clubes
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    col_table, col_radar = st.columns(2)
-                    comparison_data = {
-                        'Clube': ['Seu Clube', 'Média Série A', 'Clube Rebaixado Típico', 'Clube Top-4 Típico'],
-                        'Plantel': [plantel, 28, 24, 32],
-                        'Estrangeiros': [estrangeiros, 4, 2, 7],
-                        'Valor de Mercado (M€)': [valor_mercado_total, 85, 30, 150],
-                        'Risco de Rebaixamento': [prob_rebaixamento, 0.5, 0.8, 0.1]
-                    }
-                    comp_df = pd.DataFrame(comparison_data)
-                    with col_table:
-                        st.markdown("### Comparação com outros clubes")
-                        st.dataframe(comp_df, hide_index=True, use_container_width=True)
-                    with col_radar:
-                        st.markdown("### Perfil do Clube")
-                        fig_radar = px.line_polar(
-                            comp_df, 
-                            r=[plantel/50, estrangeiros/15, valor_mercado_total/300, 1-prob_rebaixamento], 
-                            theta=['Tamanho do Elenco', 'Estrangeiros', 'Valor de Mercado', 'Segurança'],
-                            line_close=True,
-                            range_r=[0, 1]
-                        )
-                        fig_radar.update_layout(height=300)
-                        st.plotly_chart(fig_radar, use_container_width=True)
-
-    # ----------------------------------------------------------
-    #  Ranking Completo com Marcação dos 4 Primeiros como "SIM"
-    # ----------------------------------------------------------
-    st.markdown("---")
-    st.subheader("🏆 Ranking Completo – Probabilidade de Rebaixamento (2025)")
-
-    # 1. Carrega toda a base histórica do Excel
-    file_path = r"dados/BASE_FINAL.xlsx"
-    try:
-        df_base = pd.read_excel(file_path)
-    except FileNotFoundError:
-        st.error(
-            f"Não foi possível encontrar '{file_path}'.\n"
-            "Verifique se o arquivo existe e contém as colunas indicadas."
+    # ── TAB 2: Ranking 2025 ───────────────────────────────────────────────────
+    with tab_rank:
+        st.markdown('<p class="section-title">Probabilidade de Rebaixamento — Temporada 2025</p>',
+                    unsafe_allow_html=True)
+        st.caption(
+            "Os **4 clubes** com maior probabilidade de rebaixamento são destacados em vermelho. "
+            "Dados baseados nos elencos/valores de mercado registrados para a temporada 2025."
         )
-        return
 
-    # 2. Filtra apenas a temporada mais recente (2024) para usar como parâmetro de previsão 2025
-    if "Temporada" not in df_base.columns:
-        st.error("A coluna 'Temporada' não foi encontrada em BASE_FINAL.xlsx.")
-        return
+        try:
+            df_base = carregar_dados_excel()
+        except Exception as e:
+            st.error(f"Erro ao carregar base de dados: {e}")
+            return
 
-    temporada_mais_recente = df_base["Temporada"].max()
-    df_parametros_2025 = df_base[df_base["Temporada"] == temporada_mais_recente].copy()
+        temp_max = df_base["Temporada"].max()
+        df_2025 = df_base[df_base["Temporada"] == temp_max].copy()
 
-    # 3. Verifica se as colunas necessárias existem
-    required_cols = {"Clube", "Plantel", "Estrangeiros", "Valor de Mercado Total"}
-    if not required_cols.issubset(df_parametros_2025.columns):
-        st.error(
-            "A planilha da temporada mais recente deve conter exatamente as colunas:\n"
-            "Clube | Plantel | Estrangeiros | Valor de Mercado Total"
+        if df_2025.empty:
+            st.warning("Nenhum dado encontrado para a temporada mais recente.")
+            return
+
+        _, probs_2025 = fazer_previsao(
+            df_2025[["Plantel", "Estrangeiros", "Valor de Mercado Total"]]
         )
-        return
 
-    # 4. Chama a previsão para todas as linhas da temporada mais recente
-    previsoes_2025, probs_2025 = fazer_previsao(
-        df_parametros_2025[["Plantel", "Estrangeiros", "Valor de Mercado Total"]]
+        df_rank = df_2025[["Clube"]].copy()
+        df_rank["Prob. Rebaixamento (%)"] = [round(p[0] * 100, 2) for p in probs_2025]
+        df_rank = df_rank.sort_values("Prob. Rebaixamento (%)", ascending=False).reset_index(drop=True)
+        df_rank.index += 1
+        df_rank["Previsão"] = "Permanece"
+        df_rank.loc[df_rank.index <= 4, "Previsão"] = "Rebaixado"
+
+        st.plotly_chart(_ranking_bar(df_rank), use_container_width=True)
+
+        # Tabela estilizada
+        def _estilo(row):
+            if row["Previsão"] == "Rebaixado":
+                return ["background-color:#fde8e8; color:#b91c1c; font-weight:600"] * len(row)
+            return [""] * len(row)
+
+        st.markdown("**Tabela completa**")
+        df_show = df_rank[["Clube", "Prob. Rebaixamento (%)", "Previsão"]]
+        st.dataframe(
+            df_show.style.apply(_estilo, axis=1),
+            use_container_width=True,
+            height=600,
+        )
+
+        # Download
+        csv_bytes = df_show.to_csv(index=True).encode("utf-8")
+        st.download_button(
+            "📥 Baixar tabela (CSV)",
+            data=csv_bytes,
+            file_name="previsao_rebaixamento_2025.csv",
+            mime="text/csv",
+        )
+
+    # ── TAB 3: Lote CSV ───────────────────────────────────────────────────────
+    with tab_lote:
+        st.markdown('<p class="section-title">Previsão em Lote via Arquivo CSV</p>',
+                    unsafe_allow_html=True)
+
+        template_df = pd.DataFrame({
+            "Clube":                ["Clube A", "Clube B"],
+            "Plantel":              [28, 24],
+            "Estrangeiros":         [4, 2],
+            "Valor de Mercado Total": [85.0, 30.0],
+        })
+        csv_buf = io.StringIO()
+        template_df.to_csv(csv_buf, index=False)
+
+        c1, c2 = st.columns([1, 2])
+        with c1:
+            st.download_button(
+                "📥 Baixar template CSV",
+                data=csv_buf.getvalue().encode("utf-8"),
+                file_name="template_clubes.csv",
+                mime="text/csv",
+            )
+        with c2:
+            st.caption("O arquivo deve conter as colunas: `Clube`, `Plantel`, `Estrangeiros`, `Valor de Mercado Total`")
+
+        with st.expander("Ver exemplo de formato"):
+            st.dataframe(template_df, use_container_width=True, hide_index=True)
+
+        uploaded = st.file_uploader("Faça upload do arquivo CSV", type=["csv"])
+        if uploaded:
+            try:
+                df_up = pd.read_csv(uploaded)
+                st.markdown("**Pré-visualização dos dados enviados:**")
+                st.dataframe(df_up.head(), use_container_width=True, hide_index=True)
+
+                with st.spinner("Gerando previsões..."):
+                    _, probs_up = fazer_previsao(
+                        df_up[["Plantel", "Estrangeiros", "Valor de Mercado Total"]]
+                    )
+                    df_up["Prob. Rebaixamento (%)"] = [round(p[0] * 100, 1) for p in probs_up]
+                    df_up["Previsão"] = [
+                        "Rebaixado" if p[0] > 0.5 else "Permanece" for p in probs_up
+                    ]
+
+                st.success(f"{len(df_up)} clube(s) analisado(s).")
+                st.dataframe(df_up, use_container_width=True, hide_index=True)
+
+                if len(df_up) > 1:
+                    fig_b = px.bar(
+                        df_up.sort_values("Prob. Rebaixamento (%)", ascending=False),
+                        x="Clube" if "Clube" in df_up.columns else df_up.index.astype(str),
+                        y="Prob. Rebaixamento (%)",
+                        color="Previsão",
+                        color_discrete_map={"Rebaixado": _VERMELHO, "Permanece": _VERDE},
+                        template=_TEMPLATE,
+                        title="Probabilidade de Rebaixamento — Clubes do Arquivo",
+                    )
+                    st.plotly_chart(fig_b, use_container_width=True)
+
+                csv_out = df_up.to_csv(index=False).encode("utf-8")
+                st.download_button("📥 Baixar resultado (CSV)", csv_out,
+                                   "resultado_previsao.csv", "text/csv")
+            except Exception as e:
+                st.error(f"Erro ao processar o arquivo: {e}")
+
+    st.markdown(
+        '<div class="custom-footer">TCC · Leonardo Feitosa · Ciência de Dados – UFPB · 2025</div>',
+        unsafe_allow_html=True,
     )
-
-    # 5. Monta o DataFrame final com probabilidade
-    df_resultado_2025 = df_parametros_2025[["Clube"]].copy()
-    df_resultado_2025["Prob_Rebaixamento"] = [p[1] for p in probs_2025]
-
-    # 6. Ordena por probabilidade de forma decrescente
-    df_sorted = df_resultado_2025.sort_values(
-        by="Prob_Rebaixamento", ascending=False
-    ).reset_index(drop=True)
-
-    # 7. Marca os 4 primeiros como "Sim" em coluna Rebaixado, os demais como "Não"
-    df_sorted["Rebaixado"] = "Não"
-    df_sorted.loc[:3, "Rebaixado"] = "Sim"
-
-    # 8. Converte a coluna Prob_Rebaixamento para porcentagem arredondada
-    df_sorted["Probabilidade (%)"] = (df_sorted["Prob_Rebaixamento"] * 100).round(2)
-
-    # 9. Seleciona apenas as colunas de exibição
-    df_exibir = df_sorted[["Clube", "Probabilidade (%)", "Rebaixado"]]
-
-    # 10. Exibe o DataFrame completo no Streamlit
-    st.dataframe(df_exibir, use_container_width=True)
-
-    # 11. Destacar em vermelho mais suave os clubes marcados como "Sim"
-    def color_light_red(row):
-        return ["background-color: #FF4C4C"] * len(row) if row["Rebaixado"] == "Sim" else [""] * len(row)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("**(Os 4 primeiros clubes, em vermelho claro, foram marcados como rebaixados)**")
-    styled = df_exibir.style.apply(color_light_red, axis=1)
-    st.write(styled.to_html(), unsafe_allow_html=True)
-
-
-if __name__ == "__main__":
-    main()

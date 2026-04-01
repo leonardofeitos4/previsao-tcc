@@ -41,8 +41,8 @@ TARGET   = 'Status_bin'
 ANO_CORTE_TREINO = 2022   # inclusive
 ANO_PREVISAO     = 2025
 
-MODELO_PATH = os.path.join("modelos", "modelo_logit_status.pkl")
-SCALER_PATH = os.path.join("modelos", "scaler_logit_status.pkl")
+MODELO_PATH = os.path.join("modelos", "logistica.pkl")
+SCALER_PATH = os.path.join("modelos", "scaler_logistica.pkl")
 
 
 # ─────────────────────────────────────────────

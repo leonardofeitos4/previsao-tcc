@@ -1,149 +1,195 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import numpy as np
+import plotly.express as px
+import plotly.graph_objects as go
+
 from app.utils.processamento import fazer_previsao
 
+_AZUL     = "#1e3d59"
+_VERMELHO = "#e53935"
+_VERDE    = "#27ae60"
+_TEMPLATE = "plotly_white"
+
+# Valores-base (médias históricas da Série A)
+_BASE = {"Plantel": 28, "Estrangeiros": 4, "Valor de Mercado Total": 85.0}
+
+
+@st.cache_data(show_spinner=False)
+def _calc_sensibilidade():
+    """Pré-computa curvas de sensibilidade para os 3 fatores."""
+    plantel_vals  = list(range(15, 51, 1))
+    estrang_vals  = list(range(0, 16, 1))
+    valor_vals    = list(range(5, 301, 5))
+
+    def _prob(p, e, v):
+        d = pd.DataFrame({"Plantel": [p], "Estrangeiros": [e], "Valor de Mercado Total": [v]})
+        _, pr = fazer_previsao(d)
+        return pr[0][0]  # prob de Rebaixamento (classe 0)
+
+    df_p = pd.DataFrame({
+        "Tamanho do Elenco": plantel_vals,
+        "Prob. Rebaixamento": [_prob(p, _BASE["Estrangeiros"], _BASE["Valor de Mercado Total"])
+                               for p in plantel_vals],
+    })
+    df_e = pd.DataFrame({
+        "Nº de Estrangeiros": estrang_vals,
+        "Prob. Rebaixamento": [_prob(_BASE["Plantel"], e, _BASE["Valor de Mercado Total"])
+                               for e in estrang_vals],
+    })
+    df_v = pd.DataFrame({
+        "Valor de Mercado (M€)": valor_vals,
+        "Prob. Rebaixamento": [_prob(_BASE["Plantel"], _BASE["Estrangeiros"], v)
+                               for v in valor_vals],
+    })
+    return df_p, df_e, df_v
+
+
+@st.cache_data(show_spinner=False)
+def _calc_interacao():
+    """Pré-computa grade para heatmap Plantel × Valor de Mercado."""
+    plantel_vals = list(range(15, 51, 5))
+    valor_vals   = list(range(5, 301, 30))
+    rows = []
+    for p in plantel_vals:
+        for v in valor_vals:
+            d = pd.DataFrame({"Plantel": [p], "Estrangeiros": [_BASE["Estrangeiros"]],
+                              "Valor de Mercado Total": [v]})
+            _, pr = fazer_previsao(d)
+            rows.append({"Plantel": p, "Valor de Mercado (M€)": v,
+                         "Prob. Rebaixamento": round(pr[0][0] * 100, 1)})
+    return pd.DataFrame(rows)
+
+
+def _hex_to_rgba(hex_color: str, alpha: float = 0.12) -> str:
+    h = hex_color.lstrip("#")
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    return f"rgba({r},{g},{b},{alpha})"
+
+
+def _linha(df, x, cor, titulo, linha_base=None):
+    fig = px.area(df, x=x, y="Prob. Rebaixamento",
+                  template=_TEMPLATE, color_discrete_sequence=[cor])
+    fig.update_traces(
+        line_width=2.5,
+        fillcolor=_hex_to_rgba(cor),
+        hovertemplate=f"<b>{x}:</b> %{{x}}<br><b>Prob. Rebaixamento:</b> %{{y:.1%}}<extra></extra>",
+    )
+    if linha_base is not None:
+        fig.add_vline(x=linha_base, line_dash="dot", line_color="gray", opacity=0.6,
+                      annotation_text="Base", annotation_position="top right")
+    fig.add_hline(y=0.5, line_dash="dash", line_color=_VERMELHO, opacity=0.4,
+                  annotation_text="50 %", annotation_position="right")
+    fig.update_layout(
+        title=dict(text=titulo, font_size=13, x=0),
+        yaxis=dict(title="Prob. Rebaixamento", tickformat=".0%", range=[0, 1]),
+        xaxis_title=x,
+        height=320,
+        margin=dict(l=10, r=10, t=45, b=40),
+    )
+    return fig
+
+
 def main():
-    
-    # Título da seção de análise de sensibilidade
-    st.markdown("<h3 class='subheader'>Análise de Sensibilidade</h3>", unsafe_allow_html=True)
-    
-    # Descrição da seção
+    st.markdown('<p class="section-title">Análise de Sensibilidade</p>',
+                unsafe_allow_html=True)
     st.markdown("""
-    <div class="card">
-        <p>Esta seção permite explorar como cada variável afeta a probabilidade de rebaixamento. 
-        Ajuste os controles deslizantes para ver como o risco muda quando você altera um fator mantendo os outros constantes.</p>
+    <div class="info-box">
+        Mostra como cada variável independente influencia a probabilidade de rebaixamento,
+        mantendo as demais fixadas nos <b>valores médios históricos da Série A</b>
+        (Plantel&nbsp;=&nbsp;28 · Estrangeiros&nbsp;=&nbsp;4 · Valor de Mercado&nbsp;=&nbsp;85&nbsp;M€).
     </div>
     """, unsafe_allow_html=True)
-    
-    # Valores base para análise de sensibilidade
-    base_plantel = 25
-    base_estrangeiros = 3
-    base_valor = 50.0
-    
-    # Divisão da tela em 3 colunas
-    col1, col2, col3 = st.columns(3)
-    
-    # Análise de impacto do Tamanho do Elenco
-    with col1:
-        st.markdown("<h4>Tamanho do Elenco</h4>", unsafe_allow_html=True)
-        plantel_range = list(range(15, 51, 5))  # Intervalo de tamanhos de elenco
-        resultados_plantel = []
-        
-        # Loop para calcular a probabilidade de rebaixamento para diferentes tamanhos de elenco
-        for p in plantel_range:
-            dados = pd.DataFrame({
-                'Plantel': [p],
-                'Estrangeiros': [base_estrangeiros],
-                'Valor de Mercado Total': [base_valor]
-            })
-            _, prob = fazer_previsao(dados)  # Previsão da probabilidade de rebaixamento
-            resultados_plantel.append(prob[0][1])
-        
-        # Criação do DataFrame com os resultados para o gráfico
-        df_plantel = pd.DataFrame({
-            'Tamanho do Elenco': plantel_range,
-            'Probabilidade de Rebaixamento': resultados_plantel
-        })
-        
-        # Gráfico de linha para mostrar o impacto do Tamanho do Elenco
-        fig_plantel = px.line(df_plantel, x='Tamanho do Elenco', y='Probabilidade de Rebaixamento',
-                           markers=True, title="Impacto do Tamanho do Elenco")
-        fig_plantel.update_layout(yaxis_tickformat='.0%')  # Formatação do eixo y
-        st.plotly_chart(fig_plantel, use_container_width=True)
-    
-    # Análise de impacto do Número de Estrangeiros
-    with col2:
-        st.markdown("<h4>Número de Estrangeiros</h4>", unsafe_allow_html=True)
-        estrangeiros_range = list(range(0, 16, 2))  # Intervalo para o número de estrangeiros
-        resultados_estrangeiros = []
-        
-        # Loop para calcular a probabilidade de rebaixamento para diferentes números de estrangeiros
-        for e in estrangeiros_range:
-            dados = pd.DataFrame({
-                'Plantel': [base_plantel],
-                'Estrangeiros': [e],
-                'Valor de Mercado Total': [base_valor]
-            })
-            _, prob = fazer_previsao(dados)
-            resultados_estrangeiros.append(prob[0][1])
-        
-        # Criação do DataFrame com os resultados para o gráfico
-        df_estrangeiros = pd.DataFrame({
-            'Número de Estrangeiros': estrangeiros_range,
-            'Probabilidade de Rebaixamento': resultados_estrangeiros
-        })
-        
-        # Gráfico de linha para mostrar o impacto do Número de Estrangeiros
-        fig_estrangeiros = px.line(df_estrangeiros, x='Número de Estrangeiros', y='Probabilidade de Rebaixamento',
-                                markers=True, title="Impacto do Número de Estrangeiros")
-        fig_estrangeiros.update_layout(yaxis_tickformat='.0%')  # Formatação do eixo y
-        st.plotly_chart(fig_estrangeiros, use_container_width=True)
-    
-    # Análise de impacto do Valor de Mercado
-    with col3:
-        st.markdown("<h4>Valor de Mercado</h4>", unsafe_allow_html=True)
-        valor_range = list(range(10, 301, 30))  # Intervalo de valores de mercado
-        resultados_valor = []
-        
-        # Loop para calcular a probabilidade de rebaixamento para diferentes valores de mercado
-        for v in valor_range:
-            dados = pd.DataFrame({
-                'Plantel': [base_plantel],
-                'Estrangeiros': [base_estrangeiros],
-                'Valor de Mercado Total': [v]
-            })
-            _, prob = fazer_previsao(dados)
-            resultados_valor.append(prob[0][1])
-        
-        # Criação do DataFrame com os resultados para o gráfico
-        df_valor = pd.DataFrame({
-            'Valor de Mercado (M€)': valor_range,
-            'Probabilidade de Rebaixamento': resultados_valor
-        })
-        
-        # Gráfico de linha para mostrar o impacto do Valor de Mercado
-        fig_valor = px.line(df_valor, x='Valor de Mercado (M€)', y='Probabilidade de Rebaixamento',
-                         markers=True, title="Impacto do Valor de Mercado")
-        fig_valor.update_layout(yaxis_tickformat='.0%')  # Formatação do eixo y
-        st.plotly_chart(fig_valor, use_container_width=True)
 
-    # Gráfico 3D para visualizar a interação entre as variáveis
-    st.markdown("<h3 class='subheader'>Interação entre Variáveis</h3>", unsafe_allow_html=True)
-    
-    # Definindo os valores para análise 3D
-    plantel_3d = [20, 25, 30, 35, 40]
-    valor_3d = [20, 50, 100, 150, 200]
-    
-    # Criação do DataFrame para armazenar os resultados da análise 3D
-    df_3d = pd.DataFrame(columns=['Plantel', 'Valor de Mercado (M€)', 'Probabilidade de Rebaixamento'])
-    
-    # Loop para calcular a probabilidade de rebaixamento para diferentes combinações de Plantel e Valor de Mercado
-    for p in plantel_3d:
-        for v in valor_3d:
-            dados = pd.DataFrame({
-                'Plantel': [p],
-                'Estrangeiros': [base_estrangeiros],
-                'Valor de Mercado Total': [v]
-            })
-            _, prob = fazer_previsao(dados)
-            df_3d = pd.concat([df_3d, pd.DataFrame({
-                'Plantel': [p],
-                'Valor de Mercado (M€)': [v],
-                'Probabilidade de Rebaixamento': [prob[0][1]]
-            })], ignore_index=True)
-    
-    # Gráfico 3D para mostrar a interação entre Plantel, Valor de Mercado e Probabilidade de Rebaixamento
-    fig_3d = px.scatter_3d(df_3d, x='Plantel', y='Valor de Mercado (M€)', z='Probabilidade de Rebaixamento',
-                        color='Probabilidade de Rebaixamento', opacity=0.7,
-                        color_continuous_scale=px.colors.sequential.Viridis)
-    
-    fig_3d.update_layout(height=600, scene=dict(
-        zaxis=dict(tickformat='.0%')
-    ))  # Formatação do eixo Z
-    st.plotly_chart(fig_3d, use_container_width=True)
+    # KPIs dos valores-base
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Plantel base", f"{_BASE['Plantel']} atletas")
+    c2.metric("Estrangeiros base", f"{_BASE['Estrangeiros']}")
+    c3.metric("Valor de Mercado base", f"{_BASE['Valor de Mercado Total']:.0f} M€")
 
-# Executa o aplicativo Streamlit
-if __name__ == "__main__":
-    main()
+    tab_uni, tab_int = st.tabs(["📈  Análise Univariada", "🗺️  Interação entre Variáveis"])
+
+    with tab_uni:
+        with st.spinner("Calculando curvas de sensibilidade..."):
+            df_p, df_e, df_v = _calc_sensibilidade()
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.plotly_chart(
+                _linha(df_p, "Tamanho do Elenco", _AZUL,
+                       "Impacto do Tamanho do Elenco", _BASE["Plantel"]),
+                use_container_width=True,
+            )
+        with col2:
+            st.plotly_chart(
+                _linha(df_e, "Nº de Estrangeiros", "#7c3aed",
+                       "Impacto do Nº de Estrangeiros", _BASE["Estrangeiros"]),
+                use_container_width=True,
+            )
+        with col3:
+            st.plotly_chart(
+                _linha(df_v, "Valor de Mercado (M€)", _VERMELHO,
+                       "Impacto do Valor de Mercado", _BASE["Valor de Mercado Total"]),
+                use_container_width=True,
+            )
+
+        st.markdown("""
+        <div class="info-box">
+            <b>Interpretação:</b> curvas descendentes indicam que aumentar a variável
+            <em>reduz</em> o risco de rebaixamento. A linha tracejada vermelha marca o limiar de 50 %.
+        </div>
+        """, unsafe_allow_html=True)
+
+    with tab_int:
+        st.markdown('<p class="section-title">Interação: Plantel × Valor de Mercado</p>',
+                    unsafe_allow_html=True)
+        st.caption(
+            f"Estrangeiros fixados em {_BASE['Estrangeiros']}. "
+            "Tons mais escuros = maior risco de rebaixamento."
+        )
+
+        with st.spinner("Calculando grade de interação..."):
+            df_int = _calc_interacao()
+
+        df_pivot = df_int.pivot(
+            index="Plantel", columns="Valor de Mercado (M€)", values="Prob. Rebaixamento"
+        )
+
+        fig_heat = px.imshow(
+            df_pivot,
+            color_continuous_scale=["#27ae60", "#f39c12", "#e53935"],
+            aspect="auto",
+            labels=dict(x="Valor de Mercado (M€)", y="Plantel", color="Prob. Reb. (%)"),
+            template=_TEMPLATE,
+        )
+        fig_heat.update_layout(
+            title=dict(text="Prob. de Rebaixamento (%) — Plantel × Valor de Mercado", font_size=13),
+            height=400,
+            margin=dict(l=10, r=10, t=50, b=40),
+            coloraxis_colorbar=dict(title="Prob. (%)", ticksuffix=" %"),
+        )
+        st.plotly_chart(fig_heat, use_container_width=True)
+
+        # Scatter 3D
+        fig_3d = px.scatter_3d(
+            df_int,
+            x="Plantel",
+            y="Valor de Mercado (M€)",
+            z="Prob. Rebaixamento",
+            color="Prob. Rebaixamento",
+            color_continuous_scale=["#27ae60", "#f39c12", "#e53935"],
+            opacity=0.85,
+            labels={"Prob. Rebaixamento": "Prob. (%)"},
+            template=_TEMPLATE,
+        )
+        fig_3d.update_layout(
+            height=540,
+            margin=dict(l=0, r=0, t=30, b=0),
+            scene=dict(zaxis_title="Prob. Reb. (%)"),
+        )
+        st.plotly_chart(fig_3d, use_container_width=True)
+
+    st.markdown(
+        '<div class="custom-footer">TCC · Leonardo Feitosa · Ciência de Dados – UFPB · 2025</div>',
+        unsafe_allow_html=True,
+    )

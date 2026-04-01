@@ -1,127 +1,198 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+
 from app.utils.processamento import carregar_dados
 
+_AZUL     = "#1e3d59"
+_VERMELHO = "#e53935"
+_VERDE    = "#27ae60"
+_TEMPLATE = "plotly_white"
+
+_STATUS_MAP = {
+    "Rebaixado":            "Rebaixado",
+    "Top4":                 "Top 4",
+    "Top 4":                "Top 4",
+    "SerieA":               "Série A",
+    "SérieA":               "Série A",
+    "Série A":              "Série A",
+    "SerieB_Para_SerieA":   "Promovido",
+    "Serie B para Série A": "Promovido",
+}
+
+_COR_STATUS = {
+    "Rebaixado":  _VERMELHO,
+    "Top 4":      _AZUL,
+    "Série A":    _VERDE,
+    "Promovido":  "#f57c00",
+}
+
+
+def _preparar(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+    df["Temporada"] = df["Temporada"].astype(str).str.replace(",", "").str.strip()
+    df = df[df["Temporada"] != ""]
+
+    if "Valor de Mercado Total" in df.columns:
+        df.rename(columns={"Valor de Mercado Total": "VM Total (M€)"}, inplace=True)
+
+    if "Situacao" in df.columns:
+        df["Situação"] = df["Situacao"].map(lambda x: _STATUS_MAP.get(str(x).strip(), str(x).strip()))
+    else:
+        df["Situação"] = "—"
+
+    return df
+
+
 def main():
-    st.markdown("<h3 class='subheader'>Base de Dados Histórica</h3>", unsafe_allow_html=True)
-    
-    df = carregar_dados()
-    df_display = df.copy()
+    st.markdown('<p class="section-title">Base de Dados Histórica — Brasileirão Série A</p>',
+                unsafe_allow_html=True)
 
-    # Corrige valores inválidos na coluna Temporada
-    df_display['Temporada'] = df_display['Temporada'].astype(str).str.replace(',', '').str.strip()
-    df_display = df_display[df_display['Temporada'] != '']
+    df_raw = carregar_dados()
+    df = _preparar(df_raw)
 
-    # Renomeia colunas para incluir (M€)
-    if 'Valor de Mercado Total' in df_display.columns:
-        df_display.rename(columns={'Valor de Mercado Total': 'Valor de Mercado Total (M€)'}, inplace=True)
-    if 'Valor de Mercado' in df_display.columns:
-        df_display.rename(columns={'Valor de Mercado': 'Valor de Mercado (M€)'}, inplace=True)
+    # ── Filtros ───────────────────────────────────────────────────────────────
+    with st.expander("🔍 Filtros", expanded=True):
+        fc1, fc2, fc3, fc4 = st.columns([2, 2, 2, 1])
+        with fc1:
+            sit_opts = sorted(df["Situação"].dropna().unique())
+            sit_sel  = st.multiselect("Situação", sit_opts, default=sit_opts, key="sit")
+        with fc2:
+            clube_opts = sorted(df["Clube"].dropna().unique())
+            clube_sel  = st.multiselect("Clube", clube_opts, default=[], key="clube",
+                                        placeholder="Todos")
+        with fc3:
+            temp_opts = sorted(df["Temporada"].dropna().unique())
+            temp_sel  = st.multiselect("Temporada", temp_opts, default=[], key="temp",
+                                       placeholder="Todas")
+        with fc4:
+            min_vm = st.number_input("VM mínimo (M€)", value=0.0, step=5.0)
 
-    # Padroniza 'Situação'
-    if 'Situacao' in df_display.columns:
-        df_display['Situacao'] = df_display['Situacao'].replace({
-            'Top4': 'Top 4',
-            'SerieA': 'Série A',
-            'SérieA': 'Série A',
-            'Serie B para Série A': 'Série B para Série A',
-            'SerieB_Para_SerieA': 'Série B para Série A',
-            'Rebaixado': 'Rebaixado'
-        })
-        df_display['Situação'] = df_display['Situacao']
-    elif 'Status' in df_display.columns:
-        status_mapping = {0: "Top 4", 1: "Série A", 2: "Série B para Série A", 3: "Rebaixado"}
-        df_display['Status'] = pd.to_numeric(df_display['Status'], errors='coerce')
-        df_display['Situação'] = df_display['Status'].map(lambda x: status_mapping.get(x, x) if pd.notna(x) else "Desconhecido")
-    else:
-        df_display['Situação'] = "Desconhecido"
+    sit_filtrada   = sit_sel or sit_opts
+    clube_filtrado = clube_sel or clube_opts
+    temp_filtrada  = temp_sel or temp_opts
 
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        situacao_options = sorted(df_display['Situação'].dropna().unique())
-        situacao_filter = st.multiselect("Situação", options=situacao_options, default=situacao_options)
-    
-    with col2:
-        clubes_options = sorted(df_display['Clube'].dropna().unique())
-        default_clubes = ["Flamengo", "Palmeiras"]
-        clube_filter = st.multiselect("Clube", options=["Todos"] + clubes_options, default=default_clubes)
-    
-    with col3:
-        temporada_options = sorted(df_display['Temporada'].dropna().unique())
-        temporada_filter = st.multiselect("Temporada", options=["Todos"] + temporada_options, default=["Todos"])
-    
-    with col4:
-        min_valor = st.number_input("Valor Mínimo (M€)", value=0.0)
+    vm_col = "VM Total (M€)" if "VM Total (M€)" in df.columns else None
+    mask = (
+        df["Situação"].isin(sit_filtrada) &
+        df["Clube"].isin(clube_filtrado) &
+        df["Temporada"].isin(temp_filtrada)
+    )
+    if vm_col:
+        mask &= df[vm_col] >= min_vm
+    df_f = df[mask]
 
-    # Tratamento dos filtros
-    situacao_filtrada = situacao_filter or situacao_options
-    clubes_filtrados = clubes_options if (not clube_filter or "Todos" in clube_filter) else clube_filter
-    temporada_filtrada = temporada_options if (not temporada_filter or "Todos" in temporada_filter) else temporada_filter
+    # KPIs
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric("Registros", len(df_f))
+    k2.metric("Clubes únicos", df_f["Clube"].nunique())
+    k3.metric("Temporadas", df_f["Temporada"].nunique())
+    reb_n = (df_f["Situação"] == "Rebaixado").sum()
+    k4.metric("Rebaixamentos", reb_n)
 
-    filtered_df = df_display[
-        (df_display['Situação'].isin(situacao_filtrada)) &
-        (df_display['Clube'].isin(clubes_filtrados)) &
-        (df_display['Temporada'].isin(temporada_filtrada)) &
-        (df_display['Valor de Mercado Total (M€)'] >= min_valor)
-    ]
+    # Tabela
+    st.dataframe(df_f.reset_index(drop=True), use_container_width=True, height=340)
+    csv = df_f.to_csv(index=False).encode("utf-8")
+    st.download_button("📥 Exportar CSV", csv, "dados_filtrados.csv", "text/csv")
 
-    st.dataframe(filtered_df, use_container_width=True, height=400)
+    st.markdown("---")
 
-    col1, col2 = st.columns(2)
+    tab_comp, tab_dist, tab_evol = st.tabs([
+        "📊  Comparação entre Clubes",
+        "🥧  Distribuição por Situação",
+        "📈  Evolução Temporal",
+    ])
 
-    # Gráfico de comparação entre times
-    with col1:
-        st.markdown("<h4>Comparação de Times</h4>", unsafe_allow_html=True)
-        if not filtered_df.empty:
-            df_bar = filtered_df[['Clube', 'Pontos', 'Valor de Mercado Total (M€)', 'Plantel']].copy()
-            df_bar = df_bar.groupby('Clube')[['Pontos', 'Valor de Mercado Total (M€)', 'Plantel']].mean().reset_index()
-            df_bar_melt = df_bar.melt(id_vars='Clube', var_name='Indicador', value_name='Valor')
-
-            fig_comp = px.bar(
-                df_bar_melt, x='Clube', y='Valor', color='Indicador',
-                barmode='group', text='Valor',
-                labels={'Valor': 'Valor'}, title='Comparação Média por Clube'
-            )
-            fig_comp.update_traces(texttemplate='%{text:.2f}', textposition='outside')
-            fig_comp.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
-            st.plotly_chart(fig_comp, use_container_width=True)
+    # ── TAB 1: Comparação ────────────────────────────────────────────────────
+    with tab_comp:
+        if df_f.empty:
+            st.info("Sem dados para exibir. Ajuste os filtros.")
         else:
-            st.info("Nenhum dado para exibir o gráfico.")
-
-    # Gráfico de pizza
-    with col2:
-        st.markdown("<h4>Proporção de Clubes por Situação</h4>", unsafe_allow_html=True)
-        if not filtered_df.empty:
-            fig_pie = px.pie(
-                filtered_df, names='Situação',
-                title='Distribuição dos Clubes',
-                hole=0.5
+            metric_col = st.selectbox(
+                "Indicador a comparar",
+                [c for c in ["Pontos", "VM Total (M€)", "Plantel", "Estrangeiros"] if c in df_f.columns],
             )
-            st.plotly_chart(fig_pie, use_container_width=True)
+            df_bar = (df_f.groupby("Clube")[metric_col].mean()
+                         .sort_values(ascending=False)
+                         .reset_index()
+                         .rename(columns={metric_col: f"{metric_col} (média)"}))
+
+            fig = px.bar(
+                df_bar.head(20),
+                x="Clube", y=f"{metric_col} (média)",
+                color=f"{metric_col} (média)",
+                color_continuous_scale=["#cfe2ff", _AZUL],
+                text_auto=".1f",
+                template=_TEMPLATE,
+                title=f"Top 20 clubes — {metric_col} (média das temporadas filtradas)",
+            )
+            fig.update_layout(
+                xaxis_tickangle=-35, height=420,
+                coloraxis_showscale=False,
+                margin=dict(l=10, r=10, t=50, b=80),
+            )
+            fig.update_traces(textposition="outside")
+            st.plotly_chart(fig, use_container_width=True)
+
+    # ── TAB 2: Distribuição ──────────────────────────────────────────────────
+    with tab_dist:
+        if df_f.empty:
+            st.info("Sem dados.")
         else:
-            st.info("Nenhum dado para exibir o gráfico.")
+            c_pie, c_bar = st.columns(2)
+            with c_pie:
+                fig_pie = px.pie(
+                    df_f, names="Situação",
+                    color="Situação",
+                    color_discrete_map=_COR_STATUS,
+                    hole=0.5,
+                    template=_TEMPLATE,
+                    title="Proporção por Situação",
+                )
+                fig_pie.update_traces(textinfo="percent+label")
+                fig_pie.update_layout(height=380, showlegend=False)
+                st.plotly_chart(fig_pie, use_container_width=True)
 
-    # Gráfico de barras por temporada com rótulos
-    st.markdown("<h4>Evolução por Temporada</h4>", unsafe_allow_html=True)
-    if not filtered_df.empty:
-        df_evolucao = filtered_df[['Clube', 'Temporada', 'Pontos', 'Valor de Mercado Total (M€)']].copy()
-        df_evolucao = df_evolucao.groupby(['Clube', 'Temporada'])[['Pontos', 'Valor de Mercado Total (M€)']].mean().reset_index()
-        df_evolucao = df_evolucao.melt(id_vars=['Clube', 'Temporada'], var_name='Indicador', value_name='Valor')
+            with c_bar:
+                df_sit_temp = (df_f.groupby(["Temporada", "Situação"])
+                                   .size()
+                                   .reset_index(name="Contagem"))
+                fig_bar2 = px.bar(
+                    df_sit_temp, x="Temporada", y="Contagem", color="Situação",
+                    color_discrete_map=_COR_STATUS,
+                    template=_TEMPLATE,
+                    title="Contagem por Temporada e Situação",
+                    barmode="stack",
+                )
+                fig_bar2.update_layout(height=380, margin=dict(b=60))
+                fig_bar2.update_xaxes(tickangle=-45)
+                st.plotly_chart(fig_bar2, use_container_width=True)
 
-        fig_evolucao = px.bar(
-            df_evolucao,
-            x='Temporada', y='Valor', color='Clube',
-            barmode='group', facet_col='Indicador', facet_col_wrap=1,
-            text='Valor', labels={'Valor': 'Valor', 'Temporada': 'Temporada'},
-            title='Pontuação e Valor de Mercado por Temporada'
-        )
-        fig_evolucao.update_traces(texttemplate='%{text:.2f}', textposition='outside')
-        fig_evolucao.update_layout(uniformtext_minsize=8, uniformtext_mode='hide', height=600)
-        st.plotly_chart(fig_evolucao, use_container_width=True)
-    else:
-        st.info("Nenhum dado disponível para o gráfico de evolução.")
+    # ── TAB 3: Evolução Temporal ─────────────────────────────────────────────
+    with tab_evol:
+        if df_f.empty or df_f["Clube"].nunique() == 0:
+            st.info("Selecione ao menos um clube nos filtros para ver a evolução.")
+        else:
+            evol_col = st.selectbox(
+                "Indicador para evolução",
+                [c for c in ["Pontos", "VM Total (M€)", "Plantel", "Estrangeiros"] if c in df_f.columns],
+                key="evol_col",
+            )
+            df_evol = (df_f.groupby(["Clube", "Temporada"])[evol_col]
+                           .mean()
+                           .reset_index()
+                           .sort_values("Temporada"))
 
-if __name__ == "__main__":
-    main()
+            fig_line = px.line(
+                df_evol, x="Temporada", y=evol_col, color="Clube",
+                markers=True, template=_TEMPLATE,
+                title=f"Evolução de {evol_col} por Temporada",
+                labels={evol_col: evol_col, "Temporada": "Temporada"},
+            )
+            fig_line.update_layout(height=430, margin=dict(b=40))
+            st.plotly_chart(fig_line, use_container_width=True)
+
+    st.markdown(
+        '<div class="custom-footer">TCC · Leonardo Feitosa · Ciência de Dados – UFPB · 2025</div>',
+        unsafe_allow_html=True,
+    )

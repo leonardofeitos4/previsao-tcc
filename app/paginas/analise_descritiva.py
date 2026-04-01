@@ -1,151 +1,186 @@
 import streamlit as st
 import pandas as pd
-import os
 import plotly.express as px
+import plotly.graph_objects as go
+import os
 
-# Mapeamento de nomes para exibição
-COL_MAP = {
-    'Plantel': 'Tamanho do Plantel',
-    'Estrangeiros': 'Número de Estrangeiros',
-    'Valor de Mercado Total': 'Valor de Mercado (R$)',
-    'Pontos': 'Pontos Obtidos'
+_AZUL     = "#1e3d59"
+_VERMELHO = "#e53935"
+_VERDE    = "#27ae60"
+_TEMPLATE = "plotly_white"
+
+_COL_MAP = {
+    "Plantel":                "Tamanho do Plantel",
+    "Estrangeiros":           "Nº de Estrangeiros",
+    "Valor de Mercado Total": "VM Total (M€)",
+    "Pontos":                 "Pontos",
 }
 
-def main():
-    st.header("📊 Análise Descritiva")
+_NUM_COLS = ["Plantel", "Estrangeiros", "Valor de Mercado Total", "Pontos"]
 
-    # Carregar dados
-    caminho = os.path.join("dados", "BASE_FINAL.xlsx")
-    df = pd.read_excel(caminho)
+
+@st.cache_data(show_spinner=False)
+def _load():
+    df = pd.read_excel(os.path.join("dados", "BASE_FINAL.xlsx"), sheet_name="CLUBES")
     df.columns = df.columns.str.strip()
+    return df
 
-    # Visão geral
-    st.subheader("📋 Visão Geral da Base")
-    st.dataframe(df, use_container_width=True)
 
-    # Filtro por temporada (exceto 2025)
-    todas_temp = sorted(df['Temporada'].unique())
-    temporadas = [t for t in todas_temp if t != 2025]
-    sel_ano = st.selectbox("Selecione a temporada para análise:", temporadas)
-    df_ano = df[df['Temporada'] == sel_ano]
+def main():
+    st.markdown('<p class="section-title">Análise Descritiva — Brasileirão Série A</p>',
+                unsafe_allow_html=True)
 
-    # Estatísticas descritivas da temporada
-    st.subheader(f"📈 Estatísticas Descritivas ({sel_ano})")
-    desc = df_ano.describe().T
-    desc.index = [COL_MAP.get(i, i) for i in desc.index]
-    desc = desc.rename(columns={
-        'count': 'Contagem',
-        'mean': 'Média',
-        'std': 'Desvio Padrão',
-        'min': 'Mínimo',
-        '25%': '1º Quartil',
-        '50%': 'Mediana',
-        '75%': '3º Quartil',
-        'max': 'Máximo'
-    })
-    st.dataframe(desc, use_container_width=True, height=400)
+    df = _load()
+    existentes = [c for c in _NUM_COLS if c in df.columns]
+    temporadas = sorted([t for t in df["Temporada"].unique() if t != 2025])
 
-    # Tabela de variáveis numéricas por clube
-    st.subheader(f"🔢 Variáveis Numéricas por Clube ({sel_ano})")
-    num_cols = ['Plantel', 'Estrangeiros', 'Valor de Mercado Total', 'Pontos']
-    existentes = [c for c in num_cols if c in df_ano.columns]
-    if existentes:
-        tabela = df_ano[['Clube'] + existentes].rename(columns=COL_MAP)
-        st.dataframe(tabela, use_container_width=True)
-    else:
-        st.warning("Nenhuma coluna numérica disponível nesta temporada.")
+    # ── Seletor de temporada ──────────────────────────────────────────────────
+    col_sel, _ = st.columns([1, 3])
+    with col_sel:
+        sel_ano = st.selectbox("Temporada para análise:", temporadas, index=len(temporadas) - 1)
 
-    # Filtro e indicadores para clube específico
-    st.subheader(f"📑 Dados e Indicadores por Clube ({sel_ano})")
-    clubes = sorted(df['Clube'].unique())
-    default_idx = clubes.index('Flamengo') if 'Flamengo' in clubes else 0
-    sel_clube = st.selectbox("Selecione o clube:", clubes, index=default_idx)
-    df_clube_ano = df_ano[df_ano['Clube'] == sel_clube]
+    df_ano = df[df["Temporada"] == sel_ano]
 
-    st.markdown(f"**Clube selecionado:** {sel_clube}")
-    st.dataframe(df_clube_ano, use_container_width=True)
+    # ── KPIs da temporada ─────────────────────────────────────────────────────
+    st.markdown(f'<p class="section-title">Temporada {sel_ano} — Visão Geral</p>',
+                unsafe_allow_html=True)
 
-    if not df_clube_ano.empty:
-        melt1 = df_clube_ano.melt(
-            id_vars=['Clube', 'Temporada'],
-            value_vars=existentes,
-            var_name='Indicador',
-            value_name='Valor'
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric("Clubes", df_ano["Clube"].nunique())
+
+    if "Plantel" in df_ano.columns:
+        k2.metric("Plantel médio", f"{df_ano['Plantel'].mean():.1f} atletas")
+    if "Valor de Mercado Total" in df_ano.columns:
+        k3.metric("VM médio (M€)", f"{df_ano['Valor de Mercado Total'].mean():.1f}")
+    if "Pontos" in df_ano.columns:
+        k4.metric("Pontos médios", f"{df_ano['Pontos'].mean():.1f}")
+
+    tab_est, tab_clube, tab_hist = st.tabs([
+        "📋  Estatísticas Descritivas",
+        "🔍  Análise por Clube",
+        "📈  Histórico Comparativo",
+    ])
+
+    # ── TAB 1: Estatísticas ───────────────────────────────────────────────────
+    with tab_est:
+        desc = df_ano[existentes].describe().T
+        desc.index = [_COL_MAP.get(i, i) for i in desc.index]
+        desc = desc.rename(columns={
+            "count": "N", "mean": "Média", "std": "Desvio Padrão",
+            "min": "Mínimo", "25%": "Q1", "50%": "Mediana", "75%": "Q3", "max": "Máximo",
+        })
+        st.dataframe(desc.round(2), use_container_width=True)
+
+        # Boxplots lado a lado
+        df_melt = (df_ano[["Clube"] + existentes]
+                   .melt(id_vars="Clube", var_name="Indicador", value_name="Valor"))
+        df_melt["Indicador"] = df_melt["Indicador"].map(lambda x: _COL_MAP.get(x, x))
+
+        fig_box = px.box(
+            df_melt, x="Indicador", y="Valor", color="Indicador",
+            points="all", template=_TEMPLATE,
+            title=f"Distribuição das variáveis — {sel_ano}",
         )
-        melt1['Indicador'] = melt1['Indicador'].map(COL_MAP)
+        fig_box.update_layout(height=400, showlegend=False, margin=dict(b=40))
+        st.plotly_chart(fig_box, use_container_width=True)
 
-        st.subheader(f"📊 Indicadores de {sel_clube} em {sel_ano}")
-        fig1 = px.bar(
-            melt1, x='Indicador', y='Valor',
-            color='Indicador', text='Valor',
-            title=f"{sel_clube} — {sel_ano}"
-        )
-        fig1.update_layout(barmode='stack')
-        fig1.update_traces(textposition='outside')
-        st.plotly_chart(fig1, use_container_width=True)
-    else:
-        st.info("Sem dados para este clube na temporada selecionada.")
+        # Tabela completa por clube
+        st.markdown(f"**Dados por clube — {sel_ano}**")
+        tabela = df_ano[["Clube"] + existentes].rename(columns=_COL_MAP).reset_index(drop=True)
+        st.dataframe(tabela, use_container_width=True, hide_index=True)
 
-    # Evolução histórica do clube
-    st.subheader(f"📈 Evolução Histórica de {sel_clube}")
+    # ── TAB 2: Por Clube ──────────────────────────────────────────────────────
+    with tab_clube:
+        clubes = sorted(df["Clube"].unique())
+        default_idx = clubes.index("Flamengo") if "Flamengo" in clubes else 0
+        sel_clube = st.selectbox("Clube:", clubes, index=default_idx, key="sel_clube")
 
-    # 📋 Dados da evolução histórica
-    df_hist = df[(df['Clube'] == sel_clube) & (df['Temporada'] != 2025)]
-    if not df_hist.empty:
-        st.markdown("📋 **Dados da Evolução Histórica**")
-        st.dataframe(df_hist, use_container_width=True)
+        df_ca = df_ano[df_ano["Clube"] == sel_clube]
 
-        melt2 = df_hist.melt(
-            id_vars=['Clube', 'Temporada'],
-            value_vars=existentes,
-            var_name='Indicador',
-            value_name='Valor'
-        )
-        melt2['Indicador'] = melt2['Indicador'].map(COL_MAP)
+        if df_ca.empty:
+            st.info(f"{sel_clube} não disputou a Série A em {sel_ano}.")
+        else:
+            # KPIs do clube
+            ck1, ck2, ck3, ck4 = st.columns(4)
+            if "Plantel" in df_ca.columns:
+                ck1.metric("Plantel", int(df_ca["Plantel"].iloc[0]))
+            if "Estrangeiros" in df_ca.columns:
+                ck2.metric("Estrangeiros", int(df_ca["Estrangeiros"].iloc[0]))
+            if "Valor de Mercado Total" in df_ca.columns:
+                ck3.metric("VM Total (M€)", f"{df_ca['Valor de Mercado Total'].iloc[0]:.1f}")
+            if "Pontos" in df_ca.columns:
+                ck4.metric("Pontos", int(df_ca["Pontos"].iloc[0]))
 
-        fig2 = px.bar(
-            melt2, x='Temporada', y='Valor',
-            color='Indicador',
-            barmode='group',
-            text='Valor',
-            title=f"Evolução de Indicadores - {sel_clube}"
-        )
-        fig2.update_traces(textposition='outside')
-        st.plotly_chart(fig2, use_container_width=True)
-    else:
-        st.info("Sem histórico disponível para esse clube.")
+            # Bar de indicadores do clube vs média da temporada
+            medias = df_ano[existentes].mean()
+            clube_vals = df_ca[existentes].iloc[0]
 
-    # Comparação de pontos ao longo das temporadas
-    st.subheader("📊 Comparação de Pontos ao Longo dos Anos")
-    sel_clubes = st.multiselect(
-        "Escolha clubes para comparar:", clubes,
-        default=[c for c in ['Flamengo', 'Vasco da'] if c in clubes]
+            comp_df = pd.DataFrame({
+                "Indicador": [_COL_MAP.get(c, c) for c in existentes],
+                sel_clube:   clube_vals.values,
+                "Média Série A": medias.values,
+            }).melt(id_vars="Indicador", var_name="Tipo", value_name="Valor")
+
+            fig_comp = px.bar(
+                comp_df, x="Indicador", y="Valor", color="Tipo", barmode="group",
+                color_discrete_map={sel_clube: _AZUL, "Média Série A": "#94a3b8"},
+                template=_TEMPLATE,
+                title=f"{sel_clube} vs Média da Série A — {sel_ano}",
+                text_auto=".1f",
+            )
+            fig_comp.update_layout(height=380, margin=dict(b=40))
+            fig_comp.update_traces(textposition="outside")
+            st.plotly_chart(fig_comp, use_container_width=True)
+
+    # ── TAB 3: Histórico ──────────────────────────────────────────────────────
+    with tab_hist:
+        clubes_hist = sorted(df["Clube"].unique())
+        default_h = [c for c in ["Flamengo", "Palmeiras", "Corinthians"] if c in clubes_hist]
+        sel_multi = st.multiselect("Clubes para comparar:", clubes_hist,
+                                   default=default_h, key="multi_hist")
+
+        if not sel_multi:
+            st.warning("Selecione ao menos um clube.")
+        else:
+            ind_hist = st.selectbox(
+                "Indicador:",
+                [_COL_MAP.get(c, c) for c in existentes],
+                key="ind_hist",
+            )
+            # Reverter mapeamento
+            inv_map = {v: k for k, v in _COL_MAP.items()}
+            col_orig = inv_map.get(ind_hist, ind_hist)
+
+            df_hist = (df[(df["Clube"].isin(sel_multi)) & (df["Temporada"] != 2025)]
+                       .sort_values("Temporada"))
+
+            fig_line = px.line(
+                df_hist, x="Temporada", y=col_orig, color="Clube",
+                markers=True, template=_TEMPLATE,
+                labels={col_orig: ind_hist},
+                title=f"Evolução de {ind_hist} por Temporada",
+                text=col_orig,
+            )
+            fig_line.update_traces(textposition="top center", texttemplate="%{text:.0f}")
+            fig_line.update_layout(height=440, margin=dict(b=40))
+            st.plotly_chart(fig_line, use_container_width=True)
+
+            # Correlação VM × Pontos (se disponíveis)
+            if "Valor de Mercado Total" in df.columns and "Pontos" in df.columns:
+                df_corr = df[(df["Clube"].isin(sel_multi)) & (df["Temporada"] != 2025)]
+                fig_sc = px.scatter(
+                    df_corr, x="Valor de Mercado Total", y="Pontos",
+                    color="Clube", size="Plantel" if "Plantel" in df_corr.columns else None,
+                    hover_data=["Temporada"],
+                    template=_TEMPLATE,
+                    labels={"Valor de Mercado Total": "VM Total (M€)"},
+                    title="Correlação: Valor de Mercado × Pontos",
+
+                )
+                fig_sc.update_layout(height=400, margin=dict(b=40))
+                st.plotly_chart(fig_sc, use_container_width=True)
+
+    st.markdown(
+        '<div class="custom-footer">TCC · Leonardo Feitosa · Ciência de Dados – UFPB · 2025</div>',
+        unsafe_allow_html=True,
     )
-
-    # Filtro de múltiplas temporadas para comparação
-    sel_temp_comp = st.multiselect(
-        "Selecione as temporadas para comparação:",
-        temporadas,
-        default=temporadas  # Aqui, seleciona todas as temporadas por padrão
-    )
-
-    if sel_clubes:
-        # Ordena os dados pela temporada para evitar que a linha "volte"
-        df_comp = df[(df['Clube'].isin(sel_clubes)) & (df['Temporada'].isin(sel_temp_comp))]
-        df_comp = df_comp.sort_values(by='Temporada')  # Ordena pela temporada
-
-        fig3 = px.line(
-            df_comp, x='Temporada', y='Pontos',
-            color='Clube', markers=True,
-            title="Pontos por Temporada",
-            text='Pontos',
-            line_shape='linear'  # Garantir linha contínua
-        )
-        fig3.update_traces(textposition="top center")
-        st.plotly_chart(fig3, use_container_width=True)
-    else:
-        st.warning("Selecione ao menos um clube para comparação.")
-
-# Execução da aplicação
-if __name__ == "__main__":
-    main()
