@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(venv311/Scripts/python.exe -m streamlit run app.py)"
+      "Bash(venv311/Scripts/python.exe -m streamlit run app.py)",
+      "Bash(python -c ':*)",
+      "Bash(venv311/Scripts/python.exe -c ':*)",
+      "Bash(taskkill /F /IM python.exe)",
+      "Bash(taskkill //F //IM python.exe)"
     ]
   }
 }

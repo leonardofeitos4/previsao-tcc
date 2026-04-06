@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-from app.utils.processamento import carregar_dados
+from app.utils.processamento import carregar_dados_excel as carregar_dados
 
 _AZUL     = "#1e3d59"
 _VERMELHO = "#e53935"
