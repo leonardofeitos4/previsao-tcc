@@ -15,7 +15,8 @@
       "Bash(venv311/Scripts/jupyter.exe nbconvert:*)",
       "Bash(tasklist)",
       "Bash(powershell -command \"Get-WmiObject Win32_Process -Filter \\\\\"name='python.exe'\\\\\" | Select-Object ProcessId,CommandLine | Format-List\")",
-      "Bash(ls *.txt *.toml *.cfg runtime.txt .python-version)"
+      "Bash(ls *.txt *.toml *.cfg runtime.txt .python-version)",
+      "Bash(venv311/Scripts/python -c ':*)"
     ]
   }
 }
