@@ -14,7 +14,8 @@
       "Bash(venv311/Scripts/python.exe -c \"import jupyter; print\\('ok'\\)\")",
       "Bash(venv311/Scripts/jupyter.exe nbconvert:*)",
       "Bash(tasklist)",
-      "Bash(powershell -command \"Get-WmiObject Win32_Process -Filter \\\\\"name='python.exe'\\\\\" | Select-Object ProcessId,CommandLine | Format-List\")"
+      "Bash(powershell -command \"Get-WmiObject Win32_Process -Filter \\\\\"name='python.exe'\\\\\" | Select-Object ProcessId,CommandLine | Format-List\")",
+      "Bash(ls *.txt *.toml *.cfg runtime.txt .python-version)"
     ]
   }
 }
