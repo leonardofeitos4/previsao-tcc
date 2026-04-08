@@ -88,18 +88,18 @@ def carregar_dados_excel() -> pd.DataFrame:
 
 
 def _criar_status_bin(df: pd.DataFrame) -> pd.DataFrame:
-    """Cria a coluna Status_bin a partir de Situacao ou Status."""
+    """Cria a coluna Status_bin a partir de Situacao.
+
+    Convencao estatistica:
+        1 = Rebaixado  (evento de interesse)
+        0 = Permaneceu (categoria de referencia)
+    """
     if 'Situacao' in df.columns:
         df[TARGET] = df['Situacao'].apply(
-            lambda x: 0 if str(x).strip().lower() == 'rebaixado' else 1
-        )
-    elif 'Status' in df.columns:
-        # Status numérico: assume 3 = Rebaixado
-        df[TARGET] = df['Status'].apply(
-            lambda x: 0 if pd.notna(x) and int(x) == 3 else 1
+            lambda x: 1 if str(x).strip().lower() == 'rebaixado' else 0
         )
     else:
-        raise ValueError("A base de dados não possui coluna 'Situacao' nem 'Status'.")
+        raise ValueError("A base de dados não possui coluna 'Situacao'.")
     return df
 
 
@@ -206,7 +206,7 @@ def avaliar_modelo(modelo, scaler, df_teste: pd.DataFrame) -> dict:
     mae      = mean_absolute_error(y_teste, y_pred)
     rmse     = np.sqrt(mean_squared_error(y_teste, y_pred))
     relatorio = classification_report(y_teste, y_pred,
-                                      target_names=['Rebaixado', 'Permaneceu'])
+                                      target_names=['Permaneceu', 'Rebaixado'])
 
     return {
         'acuracia':  acuracia,
@@ -229,10 +229,10 @@ def fazer_previsao(dados_entrada_df: pd.DataFrame):
 
     Returns:
         tuple(previsao, probabilidades)
-            previsao      : array de int (0 = Rebaixado, 1 = Permaneceu)
+            previsao      : array de int (1 = Rebaixado, 0 = Permaneceu)
             probabilidades: array shape (n, 2)
-                            probabilidades[:, 0] → prob. de rebaixamento
-                            probabilidades[:, 1] → prob. de permanência
+                            probabilidades[:, 0] → prob. de permanência
+                            probabilidades[:, 1] → prob. de rebaixamento
     """
     modelo, scaler = carregar_modelo()
 
@@ -241,13 +241,5 @@ def fazer_previsao(dados_entrada_df: pd.DataFrame):
 
     previsao      = modelo.predict(dados_scaled)
     probabilidade = modelo.predict_proba(dados_scaled)
-
-    # Garantir orientação correta: classe 0 = Rebaixado
-    # O LogisticRegression ordena classes em ordem crescente.
-    # classes_[0] deve ser 0 (Rebaixado).
-    if modelo.classes_[0] == 1:
-        # Se a classe 0 do modelo for "1" (permanência), inverte
-        previsao      = 1 - previsao
-        probabilidade = np.column_stack((probabilidade[:, 1], probabilidade[:, 0]))
 
     return previsao, probabilidade

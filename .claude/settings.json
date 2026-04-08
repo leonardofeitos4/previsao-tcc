@@ -5,7 +5,16 @@
       "Bash(python -c ':*)",
       "Bash(venv311/Scripts/python.exe -c ':*)",
       "Bash(taskkill /F /IM python.exe)",
-      "Bash(taskkill //F //IM python.exe)"
+      "Bash(taskkill //F //IM python.exe)",
+      "Bash(venv311/Scripts/python.exe split_cells.py)",
+      "Bash(rm split_cells.py)",
+      "Bash(venv311/Scripts/python.exe fix_scraping.py)",
+      "Bash(rm fix_scraping.py)",
+      "Bash(python -u -c ':*)",
+      "Bash(venv311/Scripts/python.exe -c \"import jupyter; print\\('ok'\\)\")",
+      "Bash(venv311/Scripts/jupyter.exe nbconvert:*)",
+      "Bash(tasklist)",
+      "Bash(powershell -command \"Get-WmiObject Win32_Process -Filter \\\\\"name='python.exe'\\\\\" | Select-Object ProcessId,CommandLine | Format-List\")"
     ]
   }
 }

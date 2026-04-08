@@ -25,7 +25,7 @@ def _calc_sensibilidade():
     def _prob(p, e, v):
         d = pd.DataFrame({"Plantel": [p], "Estrangeiros": [e], "Valor de Mercado Total": [v]})
         _, pr = fazer_previsao(d)
-        return pr[0][0]  # prob de Rebaixamento (classe 0)
+        return pr[0][1]  # prob de Rebaixamento (classe 1)
 
     df_p = pd.DataFrame({
         "Tamanho do Elenco": plantel_vals,
@@ -57,7 +57,7 @@ def _calc_interacao():
                               "Valor de Mercado Total": [v]})
             _, pr = fazer_previsao(d)
             rows.append({"Plantel": p, "Valor de Mercado (M€)": v,
-                         "Prob. Rebaixamento": round(pr[0][0] * 100, 1)})
+                         "Prob. Rebaixamento": round(pr[0][1] * 100, 1)})
     return pd.DataFrame(rows)
 
 

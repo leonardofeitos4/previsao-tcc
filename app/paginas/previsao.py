@@ -123,7 +123,7 @@ def main():
                 })
                 with st.spinner("Calculando..."):
                     _, probs = fazer_previsao(entrada)
-                    prob_reb = probs[0][0]   # índice 0 → classe Rebaixado
+                    prob_reb = probs[0][1]   # índice 1 → classe Rebaixado
 
                 css_cls, emoji, mensagem = _cor_e_classe(prob_reb)
 
@@ -184,7 +184,7 @@ def main():
         )
 
         df_rank = df_2025[["Clube"]].copy()
-        df_rank["Prob. Rebaixamento (%)"] = [round(p[0] * 100, 2) for p in probs_2025]
+        df_rank["Prob. Rebaixamento (%)"] = [round(p[1] * 100, 2) for p in probs_2025]
         df_rank = df_rank.sort_values("Prob. Rebaixamento (%)", ascending=False).reset_index(drop=True)
         df_rank.index += 1
         df_rank["Previsão"] = "Permanece"
@@ -254,9 +254,9 @@ def main():
                     _, probs_up = fazer_previsao(
                         df_up[["Plantel", "Estrangeiros", "Valor de Mercado Total"]]
                     )
-                    df_up["Prob. Rebaixamento (%)"] = [round(p[0] * 100, 1) for p in probs_up]
+                    df_up["Prob. Rebaixamento (%)"] = [round(p[1] * 100, 1) for p in probs_up]
                     df_up["Previsão"] = [
-                        "Rebaixado" if p[0] > 0.5 else "Permanece" for p in probs_up
+                        "Rebaixado" if p[1] > 0.5 else "Permanece" for p in probs_up
                     ]
 
                 st.success(f"{len(df_up)} clube(s) analisado(s).")
