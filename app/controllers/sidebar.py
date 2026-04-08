@@ -42,11 +42,11 @@ def sidebar_content() -> None:
 </div>
 <div class="sidebar-metric">
   <span class="sidebar-metric-label">Acurácia (teste)</span>
-  <span class="sidebar-metric-value">89 %</span>
+  <span class="sidebar-metric-value">77,5 %</span>
 </div>
 <div class="sidebar-metric">
   <span class="sidebar-metric-label">AUC-ROC</span>
-  <span class="sidebar-metric-value">0.94</span>
+  <span class="sidebar-metric-value">0.82</span>
 </div>
 """, unsafe_allow_html=True)
 

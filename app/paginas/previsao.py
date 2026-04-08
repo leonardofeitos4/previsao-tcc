@@ -79,7 +79,7 @@ def main():
     st.markdown("""
     <div class="info-box">
         Modelo de <b>Regressão Logística</b> treinado com dados do Transfermarkt (2014–2022) e
-        validado em 2023–2024 &nbsp;(acurácia&nbsp;89&nbsp;%). As previsões são baseadas em
+        validado em 2023–2024 &nbsp;(acurácia&nbsp;77,5&nbsp;% · AUC-ROC&nbsp;0,82). As previsões são baseadas em
         <b>tamanho do elenco</b>, <b>nº de estrangeiros</b> e <b>valor de mercado total</b>.
     </div>
     """, unsafe_allow_html=True)
