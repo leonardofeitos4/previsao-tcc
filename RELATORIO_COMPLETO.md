@@ -1,7 +1,7 @@
 # Relatório Completo do Projeto
 ## Previsão de Rebaixamento no Brasileirão Série A — TCC
 
-**Aluno:** Leonardo Feitosa  
+**Aluno:** Leonardo Feitosa Barroso  
 **Curso:** Ciência de Dados — UFPB  
 **Ano:** 2025  
 
@@ -16,7 +16,8 @@ Foram treinados e comparados **3 modelos de classificação binária**:
 - Random Forest
 - Support Vector Machine (SVM)
 
-A variável-alvo é binária: **0 = Rebaixado** | **1 = Permaneceu na Série A**
+A variável-alvo é binária seguindo a convenção estatística padrão:  
+**1 = Rebaixado** (evento de interesse) | **0 = Permaneceu na Série A** (referência)
 
 ---
 
@@ -27,6 +28,7 @@ Previsao-Tcc/
 │
 ├── app.py                          ← Entrada principal do Streamlit
 ├── requirements.txt                ← Dependências do projeto
+├── runtime.txt                     ← Versão Python (3.11.9) para Streamlit Cloud
 │
 ├── app/
 │   ├── controllers/
@@ -53,6 +55,8 @@ Previsao-Tcc/
 │   └── scaler_svm.pkl              ← Scaler do SVM
 │
 ├── img/                            ← Gráficos gerados pelos notebooks
+│   ├── distribuicao_status_bin.png ← Pizza: proporção Rebaixado/Permaneceu
+│   ├── pontos_por_situacao.png     ← Histograma de pontos por situação
 │   ├── cm_logistica.png            ← Matriz de confusão — Logística
 │   ├── cm_random_forest.png        ← Matriz de confusão — Random Forest
 │   ├── cm_svm.png                  ← Matriz de confusão — SVM
@@ -82,7 +86,7 @@ Previsao-Tcc/
 ## 3. BASE DE DADOS — BASE_FINAL.xlsx
 
 - **Fonte:** Transfermarkt (https://www.transfermarkt.com.br)
-- **Coleta:** Python com `requests` + `BeautifulSoup` (sem Excel, sem PROCV)
+- **Coleta:** Python com `requests` + `BeautifulSoup`
 - **Período:** 2014 a 2025 (12 temporadas)
 - **Registros:** 240 (20 clubes × 12 temporadas)
 - **Clubes únicos:** 35
@@ -98,7 +102,7 @@ Previsao-Tcc/
 | `Temporada` | int | Ano da temporada |
 | `Pontos` | int | Pontos finais (NaN para 2025) |
 | `Situacao` | string | Resultado: Rebaixado, SerieA, Top4 |
-| `Status_bin` | int | Variável-alvo: 0=Rebaixado, 1=Permaneceu |
+| `Status_bin` | int | **1 = Rebaixado, 0 = Permaneceu** |
 
 ### Features usadas no modelo
 - `Plantel`
@@ -107,207 +111,158 @@ Previsao-Tcc/
 
 ---
 
-## 4. ERROS IDENTIFICADOS E CORRIGIDOS
+## 4. CORREÇÕES REALIZADAS
 
-### 4.1 Substituição do PROCV no Excel por Python
+### 4.1 Encoding da variável-alvo (Status_bin)
 
-**Problema:** Os pontos finais de cada temporada eram adicionados manualmente via PROCV no Excel, processo manual, sujeito a erros e não reprodutível.
+**Problema:** O encoding original era `0 = Rebaixado, 1 = Permaneceu`, invertendo a convenção estatística padrão da Regressão Logística, onde `1` deve representar o evento de interesse.
 
-**Solução:** Script Python com `requests` + `BeautifulSoup` que raspa a tabela de classificação final do Transfermarkt para cada temporada (2014–2024), com merge automático por `Clube + Temporada`.
-
-**Onde está:** `notebooks/00_coleta_dados.ipynb` — células de URLs e verificação
-
-**Convenção de URLs descoberta:**
-- O Transfermarkt usa `saison_id = Temporada - 1`
-- Exemplo: Temporada 2024 na BASE_FINAL → `saison_id=2023` na URL
+**Solução:** Corrigido para `1 = Rebaixado, 0 = Permaneceu` em todos os notebooks (00 a 07) e no Streamlit.
 
 ---
 
-### 4.2 Padronização de Nomes de Clubes
+### 4.2 Probabilidades invertidas no Streamlit
 
-**Problema:** O mesmo clube aparecia com nomes diferentes ao longo das temporadas, quebrando o merge e causando duplicatas.
+**Problema:** Com o encoding corrigido (`1 = Rebaixado`), o `predict_proba` do sklearn retorna:
+- `probs[:, 0]` → probabilidade de **Permaneceu** (classe 0)
+- `probs[:, 1]` → probabilidade de **Rebaixado** (classe 1)
 
-| Nome original | Nome padronizado | Motivo |
-|---|---|---|
-| `Atlético Paranaense` | `Athletico Paranaense` | Rebrand oficial do clube em 2018 |
-| `Vasco da` | `Vasco da Gama` | Nome truncado pelo Transfermarkt |
+O Streamlit estava usando `probs[:, 0]` como prob. de rebaixamento — completamente invertido.
 
-**Onde está:** `notebooks/00_coleta_dados.ipynb` — célula "Limpeza 1"
-
-**Código:**
-```python
-renomear = {
-    'Atlético Paranaense': 'Athletico Paranaense',
-    'Vasco da':            'Vasco da Gama',
-}
-for antigo, novo in renomear.items():
-    df.loc[df['Clube'] == antigo, 'Clube'] = novo
-```
-
----
-
-### 4.3 Correção dos Rótulos de Rebaixamento
-
-**Problema:** A coluna `Situacao` continha erros graves — 8 clubes marcados como `Rebaixado` que não foram rebaixados, e 8 clubes que foram rebaixados mas estavam como `SerieA`. Erro identificado comparando a base com as tabelas históricas oficiais do Brasileirão.
-
-**Regra:** Cada temporada deve ter **exatamente 4 clubes rebaixados**.
-
-**Clubes removidos do Rebaixado (estavam errados):**
-
-| Clube | Temporada |
-|---|---|
-| Vitória | 2016 |
-| Vitória | 2017 |
-| Ceará | 2019 |
-| Fortaleza | 2020 |
-| Vasco da Gama | 2023 |
-| Grêmio | 2024 |
-| Juventude | 2024 |
-| Vitória | 2024 |
-
-**Clubes adicionados ao Rebaixado (estavam faltando):**
-
-| Clube | Temporada |
-|---|---|
-| Avaí | 2015 |
-| Avaí | 2017 |
-| América Mineiro | 2018 |
-| Sport Recife | 2018 |
-| Vasco da Gama | 2020 |
-| Bahia | 2021 |
-| Goiás | 2023 |
-| Cuiabá | 2024 |
-
-**Onde está:** `notebooks/00_coleta_dados.ipynb` — célula "Limpeza 2"
-
----
-
-### 4.4 Correção do Bug de Probabilidade Invertida no Streamlit
-
-**Problema:** Todas as páginas do Streamlit usavam `prob[1]` (probabilidade de **permanência**) como probabilidade de rebaixamento — o ranking estava completamente invertido.
-
-**Solução:** Substituído por `prob[0]` (probabilidade de **rebaixamento**) em todos os arquivos:
+**Solução:** Corrigido para `probs[:, 1]` em:
 - `app/paginas/previsao.py`
 - `app/paginas/analise_sensibilidade.py`
 - `app/utils/processamento.py`
 
-**Código correto:**
+---
+
+### 4.3 Métricas incorretas na sidebar e página de previsão
+
+**Problema:** Acurácia exibida era 89% e AUC-ROC 0.94 — valores incorretos, hardcoded de versão anterior.
+
+**Solução:** Corrigido para os valores reais calculados no teste 2023–2024:
+- Acurácia: **77,5%**
+- AUC-ROC: **0.82**
+
+Arquivos: `app/controllers/sidebar.py` e `app/paginas/previsao.py`
+
+---
+
+### 4.4 Padronização de nomes de clubes via NOME_MAP
+
+**Problema:** O Transfermarkt usa nomes diferentes para o mesmo clube nas páginas de elenco e classificação (ex: `"CR Flamengo"` vs `"Flamengo"`), quebrando o merge e gerando Pontos = NaN.
+
+**Solução:** Dicionário `NOME_MAP` com 70+ entradas + função `normalizar_nome()` com remoção de acentos via `unicodedata`, aplicada em ambos os scrapers antes do merge.
+
+---
+
+### 4.5 Convenção de URLs do Transfermarkt
+
+**Problema:** `saison_id = Temporada` retornava dados errados (ex: temporada 2024 retornava standings parciais de 2025).
+
+**Solução:** `saison_id = Temporada - 1` aplicado em ambas as funções de scraping (`fn_elenco` e `fn_pontos`).
+
+---
+
+### 4.6 Rótulos de rebaixamento corrigidos via dicionário REBAIXADOS
+
+**Problema:** A `Situacao` derivada automaticamente da posição na tabela tinha erros pontuais.
+
+**Solução:** Dicionário `REBAIXADOS` hardcoded com os 4 rebaixados reais de cada temporada (2014–2024), sobrescrevendo o valor derivado do scraping.
+
 ```python
-prob_reb = probs[0][0]   # índice 0 → classe Rebaixado
+REBAIXADOS = {
+    2014: ["Bahia", "Botafogo", "Criciuma", "Vitoria"],
+    2015: ["Avai", "Goias", "Joinville", "Vasco da Gama"],
+    # ... 2016 a 2024
+    2024: ["Athletico Paranaense", "Atletico Goianiense", "Criciuma", "Cuiaba"],
+}
 ```
 
 ---
 
-### 4.5 Correção dos Caminhos dos Modelos
+### 4.7 Notebooks 04 e 05 — modelos inexistentes
 
-**Problema:** `notebooks/07_previsao_2025.ipynb` e `app/utils/processamento.py` carregavam arquivos inexistentes:
-- `modelo_logit_status.pkl` → não existia
-- `scaler_logit_status.pkl` → não existia
+**Problema:** Os notebooks 04 e 05 tentavam `joblib.load()` de arquivos `random_forest.pkl` e `svm.pkl` que haviam sido deletados.
 
-**Solução:** Corrigido para os arquivos corretos gerados pelo notebook 03:
-- `modelos/logistica.pkl`
-- `modelos/scaler_logistica.pkl`
+**Solução:** Substituídas as células de carregamento por treinamento direto inline (igual ao notebook 03), com geração das imagens e salvamento dos `.pkl` ao final.
 
 ---
 
-### 4.6 Notebooks com Kernel Travando (matplotlib no Windows)
+### 4.8 Requirements.txt para deploy no Streamlit Cloud
 
-**Problema:** No Windows com VS Code Jupyter, o comando `plt.show()` causa crash do kernel sem possibilidade de interrupção.
+**Problema:** `selenium`, `webdriver-manager` e `beautifulsoup4` causavam falha no install do Cloud (sem Chrome disponível).
 
-**Solução aplicada nos notebooks 04, 05 e 06:**
-- Removido `matplotlib` e `plt.show()` dos notebooks
-- Gráficos gerados via terminal Python com `matplotlib.use('Agg')`
-- Notebooks exibem as imagens salvas com `display(Image(filename=...))`
-
----
-
-### 4.7 Erro de Sintaxe no Notebook 02
-
-**Problema:** `print[df['col',...]]` — duplo erro: `print[]` e colchete em vez de parêntese.
-
-**Solução:** Corrigido para `print(df[['col',...]])`.
-
----
-
-### 4.8 Dados Históricos Lendo CSV Desatualizado
-
-**Problema:** `app/paginas/dados_historicos.py` importava `carregar_dados()` que lia `dados/BASE_FINAL.csv` — arquivo desatualizado sem as correções de pontos.
-
-**Solução:** Alterado para `carregar_dados_excel()` que lê `dados/BASE_FINAL.xlsx`.
+**Solução:** Removidos os pacotes de scraping do `requirements.txt` (usados apenas localmente nos notebooks) e relaxadas as versões fixas para intervalos compatíveis.
 
 ---
 
 ## 5. NOTEBOOKS — O QUE CADA UM FAZ
 
 ### 00_coleta_dados.ipynb
-Documenta todo o processo de coleta e limpeza:
-1. **URLs de scraping** — elenco (saison_id = Temporada) e pontos (saison_id = Temporada - 1)
-2. **Carregamento** da BASE_FINAL.xlsx
-3. **Limpeza 1** — padronização de nomes de clubes
-4. **Limpeza 2** — correção dos rótulos de rebaixamento + salva xlsx corrigido
-5. **Criação do Status_bin** — variável binária 0/1
-6. **Verificação dos pontos** — confirma zero zeros indevidos
-7. **Histograma** — distribuição de pontos por situação final
+1. Exibe URLs de scraping (convenção `saison_id = Temporada - 1`)
+2. Define `NOME_MAP` + `normalizar_nome()` para padronização de nomes
+3. `coletar_elenco_temporada(ano)` — scrapa plantel de cada clube
+4. `coletar_pontos_temporada(ano)` — scrapa pontos e deriva Situação pela posição
+5. Merge por `[Clube, Temporada]`
+6. Aplica dicionário `REBAIXADOS` para corrigir rótulos
+7. Cria `Status_bin` (1=Rebaixado, 0=Permaneceu)
+8. Verifica Pontos (zero NaN esperado em 2014–2024)
+9. Gera gráficos: pizza de Status_bin + histograma de pontos por situação
+10. Salva `BASE_FINAL.xlsx`
 
 ### 01_analise_exploratoria.ipynb
 - Distribuição das variáveis por temporada
-- Correlações entre features
+- Correlações entre features e Status_bin
 - Boxplots: rebaixados vs permaneceram
-- Evolução do valor de mercado ao longo dos anos
+- Histogramas de distribuição das features por situação final
 
 ### 02_preprocessamento.ipynb
 - Separação temporal treino/teste (sem aleatoriedade):
-  - **Treino:** 2014–2022 (180 registros)
-  - **Teste:** 2023–2024 (40 registros)
-  - **Previsão:** 2025 (20 registros)
+  - **Treino:** 2014–2022 (180 registros, 36 rebaixados)
+  - **Teste:** 2023–2024 (40 registros, 8 rebaixados)
+  - **Previsão:** 2025 (20 registros, sem rótulo)
 - Aplicação do `StandardScaler` (ajuste apenas no treino)
-- Verificação de valores nulos e distribuição das classes
+- Visualização da divisão temporal
 
 ### 03_modelo_logistica.ipynb
-- Treinamento da Regressão Logística com `class_weight='balanced'`
-- Avaliação: acurácia, relatório de classificação, matriz de confusão
-- Curva ROC e AUC
-- Coeficientes do modelo (interpretabilidade)
-- Salva: `logistica.pkl` e `scaler_logistica.pkl`
+- Treinamento com `class_weight='balanced'`, `max_iter=1000`
+- Matriz de confusão, relatório de classificação, curva ROC
+- Coeficientes do modelo
+- Salva: `modelos/logistica.pkl` e `modelos/scaler_logistica.pkl`
 
 ### 04_modelo_random_forest.ipynb
-- Carrega `random_forest.pkl` (treinado via terminal por instabilidade do kernel no Windows)
-- Avalia métricas e exibe imagens salvas
-- Importância das features (Gini)
-- Salva: `random_forest.pkl` e `scaler_rf.pkl`
+- Treina RF com 300 árvores, `class_weight='balanced'`
+- Matriz de confusão, curva ROC, importância das features
+- Salva: `modelos/random_forest.pkl` e `modelos/scaler_rf.pkl`
 
 ### 05_modelo_svm.ipynb
-- Carrega `svm.pkl` (treinado via terminal pelo mesmo motivo)
-- SVM com kernel RBF e `probability=True`
-- Avalia métricas e exibe curva ROC
-- Salva: `svm.pkl` e `scaler_svm.pkl`
+- Treina SVM com kernel RBF, `C=1.0`, `gamma='scale'`, `probability=True`
+- Matriz de confusão, curva ROC, tabela de probabilidades
+- Salva: `modelos/svm.pkl` e `modelos/scaler_svm.pkl`
 
 ### 06_comparacao_modelos.ipynb
-- Carrega os 3 modelos e compara no **mesmo conjunto de teste**
-- Tabela com Acurácia, MAE, RMSE e AUC
-- Gráfico de barras comparativo
-- Curvas ROC dos 3 modelos sobrepostas
+- Carrega os 3 modelos e compara no mesmo conjunto de teste
+- Gráfico de barras comparativo de métricas
+- Curvas ROC sobrepostas
 - Matrizes de confusão lado a lado
-- **Justificativa da escolha do modelo final:** Regressão Logística
+- Justificativa da escolha da Regressão Logística como modelo final
 
 ### 07_previsao_2025.ipynb
-- Carrega o modelo final (Regressão Logística)
-- Aplica nos dados de 2025 (20 clubes)
-- Gera probabilidades de rebaixamento para cada clube
-- Tabela e gráfico de ranking de risco
-- 4 clubes com maior probabilidade marcados como previsão de rebaixamento
+- Carrega modelo final (Regressão Logística)
+- Aplica nos 20 clubes da temporada 2025
+- Gera ranking de probabilidade de rebaixamento
+- Salva `img/previsao_2025.png`
 
 ---
 
-## 6. SEPARAÇÃO TEMPORAL (SEM VAZAMENTO DE DADOS)
+## 6. SEPARAÇÃO TEMPORAL (SEM DATA LEAKAGE)
 
-A separação foi feita **exclusivamente por período temporal**, nunca de forma aleatória. Isso é fundamental para dados de série temporal — usar split aleatório causaria **data leakage** (o modelo "veria o futuro" durante o treino).
-
-| Conjunto | Período | Registros |
-|---|---|---|
-| Treino | 2014–2022 | 180 |
-| Teste | 2023–2024 | 40 |
-| Previsão | 2025 | 20 |
+| Conjunto | Período | Registros | Rebaixados |
+|---|---|---|---|
+| Treino | 2014–2022 | 180 | 36 |
+| Teste | 2023–2024 | 40 | 8 |
+| Previsão | 2025 | 20 | — |
 
 ---
 
@@ -315,39 +270,45 @@ A separação foi feita **exclusivamente por período temporal**, nunca de forma
 
 Métricas no conjunto de teste (2023–2024):
 
-| Modelo | Acurácia | MAE | RMSE | AUC |
+| Modelo | Acurácia | MAE | RMSE | AUC-ROC |
 |---|---|---|---|---|
-| **Regressão Logística** | **75,00%** | 0.2500 | 0.5000 | **0.8125** |
-| Random Forest | 82,50% | 0.1750 | 0.4183 | 0.6309 |
-| SVM | 77,50% | 0.2250 | 0.4743 | 0.6836 |
+| **Regressão Logística** | 77,5% | 0.2250 | 0.4743 | **0.82** |
+| Random Forest | 77,5% | 0.2250 | 0.4743 | 0.70 |
+| SVM | 77,5% | 0.2250 | 0.4743 | 0.68 |
 
 ### Por que a Regressão Logística foi escolhida?
 
-1. **Maior AUC (0.8125)** — melhor capacidade de distinguir rebaixados de não-rebaixados, que é o objetivo do modelo
-2. **Interpretabilidade** — os coeficientes revelam diretamente o peso de cada variável
+1. **Maior AUC (0.82)** — melhor capacidade de distinguir rebaixados de não-rebaixados
+2. **Interpretabilidade** — coeficientes revelam diretamente o peso de cada variável
 3. **Adequação ao problema** — variável binária, poucas features numéricas
 4. **AUC é a métrica mais relevante** para problemas com classes desbalanceadas
 
-### Coeficientes da Regressão Logística
+### Coeficientes da Regressão Logística (features padronizadas)
 
 | Feature | Coeficiente | Interpretação |
 |---|---|---|
-| `Valor de Mercado Total` | +1.151 | Maior valor → menor risco de rebaixamento |
-| `Plantel` | -0.665 | Plantel maior → maior risco (correlacionado com clubes menores) |
-| `Estrangeiros` | +0.079 | Pouco impacto isolado |
+| `Valor de Mercado Total` | −1.135 | Maior valor → **menor** risco de rebaixamento |
+| `Plantel` | +0.549 | Plantel maior → ligeiramente maior risco (elencos inchados) |
+| `Estrangeiros` | −0.067 | Pouco impacto isolado |
 
 ---
 
 ## 8. PREVISÃO 2025
 
-Os 4 clubes com maior probabilidade de rebaixamento prevista para 2025:
+Top 8 clubes por probabilidade de rebaixamento (Regressão Logística):
 
 | Posição | Clube | Prob. Rebaixamento |
 |---|---|---|
-| 1º | Juventude | 50,3% |
-| 2º | Mirassol | 46,4% |
-| 3º | Ceará | 36,5% |
-| 4º | Vitória | 30,4% |
+| 1º | Sport Recife | 65,4% |
+| 2º | Vitória | 64,0% |
+| 3º | Juventude | 54,9% |
+| 4º | Mirassol | 49,0% |
+| 5º | Ceará | 36,3% |
+| 6º | Fluminense | 26,0% |
+| 7º | Fortaleza | 24,6% |
+| 8º | Bahia | 23,8% |
+
+> **Nota:** Mirassol aparece em 4º por ser a primeira participação histórica na Série A, com elenco e valor de mercado abaixo da média da competição.
 
 > **Limitações:** O modelo usa apenas dados de elenco e valor de mercado registrados no início da temporada. Não considera lesões, mudanças técnicas, calendário ou desempenho em campo.
 
@@ -355,7 +316,10 @@ Os 4 clubes com maior probabilidade de rebaixamento prevista para 2025:
 
 ## 9. APLICAÇÃO STREAMLIT
 
-Para executar:
+- **Deploy:** https://previsao-tcc-tfdykpjzhid7qj7cqquwbr.streamlit.app/
+- **Repositório:** https://github.com/leonardofeitos4/previsao-tcc
+
+Para executar localmente:
 ```bash
 python -m streamlit run app.py
 ```
@@ -373,26 +337,26 @@ python -m streamlit run app.py
 
 ## 10. DESBALANCEAMENTO DE CLASSES
 
-O dataset tem desequilíbrio natural: apenas **~20% dos registros são rebaixamentos** (44 de 220).
+O dataset tem desequilíbrio natural: apenas **~20% dos registros são rebaixamentos** (44 de 220 casos rotulados).
 
-**Solução adotada:** `class_weight='balanced'` em todos os modelos — pondera automaticamente as classes inversamente proporcional às frequências, forçando o modelo a aprender o padrão dos rebaixamentos.
+**Solução adotada:** `class_weight='balanced'` em todos os modelos.
 
 ---
 
 ## 11. TECNOLOGIAS UTILIZADAS
 
-| Biblioteca | Versão | Uso |
-|---|---|---|
-| `pandas` | — | Manipulação de dados |
-| `numpy` | — | Operações numéricas |
-| `scikit-learn` | — | Modelos, métricas, pré-processamento |
-| `matplotlib` / `seaborn` | — | Geração de gráficos |
-| `joblib` | — | Persistência dos modelos |
-| `requests` + `BeautifulSoup` | — | Scraping do Transfermarkt |
-| `openpyxl` | — | Leitura/escrita de Excel |
-| `streamlit` | — | Interface web interativa |
-| `plotly` | — | Gráficos interativos no Streamlit |
+| Biblioteca | Uso |
+|---|---|
+| `pandas` | Manipulação de dados |
+| `numpy` | Operações numéricas |
+| `scikit-learn` | Modelos, métricas, pré-processamento |
+| `matplotlib` / `seaborn` | Geração de gráficos nos notebooks |
+| `joblib` | Persistência dos modelos |
+| `requests` + `BeautifulSoup` | Scraping do Transfermarkt |
+| `openpyxl` | Leitura/escrita de Excel |
+| `streamlit` | Interface web interativa |
+| `plotly` | Gráficos interativos no Streamlit |
 
 ---
 
-*Relatório gerado automaticamente — TCC Leonardo Feitosa — UFPB 2025*
+*TCC — Leonardo Feitosa Barroso — Ciência de Dados — UFPB — 2025*
