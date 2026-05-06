@@ -42,19 +42,35 @@ def sidebar_content() -> None:
 </div>
 <div class="sidebar-metric">
   <span class="sidebar-metric-label">Acurácia (teste)</span>
-  <span class="sidebar-metric-value">77,5 %</span>
+  <span class="sidebar-metric-value">80,0 %</span>
 </div>
 <div class="sidebar-metric">
-  <span class="sidebar-metric-label">AUC-ROC</span>
-  <span class="sidebar-metric-value">0.82</span>
+  <span class="sidebar-metric-label">AUC-ROC (teste)</span>
+  <span class="sidebar-metric-value">0,828</span>
+</div>
+<div class="sidebar-metric">
+  <span class="sidebar-metric-label">AUC-ROC (CV)</span>
+  <span class="sidebar-metric-value">0,754 ± 0,058</span>
+</div>
+<div class="sidebar-metric">
+  <span class="sidebar-metric-label">Validação</span>
+  <span class="sidebar-metric-value">Walk-forward (5 folds)</span>
+</div>
+<div class="sidebar-metric">
+  <span class="sidebar-metric-label">Modelos testados</span>
+  <span class="sidebar-metric-value">LR · RF · XGB · LGB</span>
 </div>
 """, unsafe_allow_html=True)
 
-    st.sidebar.markdown('<p class="sidebar-section-title">Features</p>', unsafe_allow_html=True)
+    st.sidebar.markdown('<p class="sidebar-section-title">Features (15)</p>', unsafe_allow_html=True)
     st.sidebar.markdown("""
+**Elenco (3):**
 - 👥 Tamanho do plantel
 - 🌍 Nº de estrangeiros
 - 💶 Valor de mercado total
+
+**Janelas deslizantes (12):**
+- 📊 Médias das últimas **3 e 5 temporadas**: pontos, saldo de gols, gols marcados, gols sofridos, vitórias, aproveitamento
 """)
 
     st.sidebar.markdown("---")

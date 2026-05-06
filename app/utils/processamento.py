@@ -4,13 +4,6 @@ utils/processamento.py
 Módulo central de processamento de dados e modelos para o TCC de Previsão de
 Rebaixamento no Brasileirão Série A.
 
-Responsabilidades:
-- Carregar e pré-processar os dados históricos (CSV e Excel)
-- Separar conjuntos de treino / teste / previsão por período temporal
-- Treinar e salvar o modelo de Regressão Logística + StandardScaler
-- Avaliar métricas do modelo no conjunto de teste
-- Realizar previsões para novos dados
-
 Separação temporal:
   Treino  : 2014 – 2022
   Teste   : 2023 – 2024
@@ -35,65 +28,26 @@ from sklearn.metrics import (
 # ─────────────────────────────────────────────
 # CONSTANTES
 # ─────────────────────────────────────────────
-FEATURES = ['Plantel', 'Estrangeiros', 'Valor de Mercado Total']
-TARGET   = 'Status_bin'
+METRICAS = ['Pts', 'SG', 'Gols_Pro', 'Gols_Contra', 'V', 'Aproveitamento']
+JANELAS  = [3, 5]
+FEATURES_ELENCO = ['Plantel', 'Estrangeiros', 'Valor de Mercado Total']
+FEATURES_JANELA = [f'{m}_media_{w}' for m in METRICAS for w in JANELAS]
+FEATURES = FEATURES_ELENCO + FEATURES_JANELA
 
-ANO_CORTE_TREINO = 2022   # inclusive
+TARGET           = 'Status_bin'
+ANO_CORTE_TREINO = 2022
 ANO_PREVISAO     = 2025
 
-MODELO_PATH = os.path.join("modelos", "logistica.pkl")
-SCALER_PATH = os.path.join("modelos", "scaler_logistica.pkl")
+MODELO_PATH  = os.path.join("modelos", "logistica.pkl")
+SCALER_PATH  = os.path.join("modelos", "scaler_logistica.pkl")
+MEDIAN_PATH  = os.path.join("modelos", "mediana_treino.pkl")
 
 
 # ─────────────────────────────────────────────
-# CARREGAMENTO DE DADOS
+# HELPERS INTERNOS
 # ─────────────────────────────────────────────
-
-@st.cache_data
-def carregar_dados() -> pd.DataFrame:
-    """
-    Lê dados/BASE_FINAL.csv e cria a coluna Status_bin.
-
-    Status_bin:
-        0 → rebaixado  (Situacao == 'Rebaixado')
-        1 → permaneceu (qualquer outro valor)
-
-    Returns:
-        pd.DataFrame com Status_bin incluído.
-    """
-    caminho = os.path.join("dados", "BASE_FINAL.csv")
-    df = pd.read_csv(caminho)
-    df.columns = df.columns.str.strip()
-    df = _criar_status_bin(df)
-    return df
-
-
-@st.cache_data
-def carregar_dados_excel() -> pd.DataFrame:
-    """
-    Lê dados/BASE_FINAL.xlsx (aba CLUBES) e cria a coluna Status_bin.
-
-    Returns:
-        pd.DataFrame com Status_bin incluído.
-    """
-    caminho = os.path.join("dados", "BASE_FINAL.xlsx")
-    try:
-        df = pd.read_excel(caminho, sheet_name="CLUBES")
-    except Exception:
-        # Fallback: primeira aba disponível
-        df = pd.read_excel(caminho)
-    df.columns = df.columns.str.strip()
-    df = _criar_status_bin(df)
-    return df
-
 
 def _criar_status_bin(df: pd.DataFrame) -> pd.DataFrame:
-    """Cria a coluna Status_bin a partir de Situacao.
-
-    Convencao estatistica:
-        1 = Rebaixado  (evento de interesse)
-        0 = Permaneceu (categoria de referencia)
-    """
     if 'Situacao' in df.columns:
         df[TARGET] = df['Situacao'].apply(
             lambda x: 1 if str(x).strip().lower() == 'rebaixado' else 0
@@ -103,25 +57,85 @@ def _criar_status_bin(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def _computar_janelas(df_desemp: pd.DataFrame) -> tuple:
+    """Computa rolling window features em df_desemp e retorna (df_desemp_ext, COLS_MERGE)."""
+    for metrica in METRICAS:
+        for w in JANELAS:
+            df_desemp[f'{metrica}_media_{w}'] = (
+                df_desemp.groupby('Clube')[metrica]
+                .transform(lambda x: x.shift(1).rolling(window=w, min_periods=1).mean())
+            )
+    COLS_MERGE = ['Clube', 'Temporada'] + FEATURES_JANELA
+    return df_desemp, COLS_MERGE
+
+
+def _extensao_2025(df_base: pd.DataFrame, df_desemp: pd.DataFrame) -> pd.DataFrame:
+    """Cria linhas 2025 com janelas calculadas a partir do histórico até 2024."""
+    clubes_2025 = df_base['Clube'][df_base['Temporada'] == 2025].unique()
+    rows = []
+    for clube in clubes_2025:
+        hist = df_desemp[df_desemp['Clube'] == clube].sort_values('Temporada', ascending=False)
+        row  = {'Clube': clube, 'Temporada': 2025}
+        for metrica in METRICAS:
+            for w in JANELAS:
+                ultimos = hist.head(w)[metrica]
+                row[f'{metrica}_media_{w}'] = ultimos.mean() if len(ultimos) > 0 else None
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+@st.cache_data
+def _carregar_desempenho() -> pd.DataFrame:
+    caminho = os.path.join("dados", "tabela_desempenho_brasileirao.xlsx")
+    df = pd.read_excel(caminho, sheet_name="Todos")
+    df.columns = df.columns.str.strip()
+    return df.sort_values(['Clube', 'Temporada']).reset_index(drop=True)
+
+
+@st.cache_data
+def carregar_desempenho_com_janelas() -> pd.DataFrame:
+    """Retorna tabela de desempenho histórico com as 12 features de janela deslizante calculadas."""
+    df, _ = _computar_janelas(_carregar_desempenho())
+    return df
+
+
 # ─────────────────────────────────────────────
-# SEPARAÇÃO DE CONJUNTOS (por período temporal)
+# CARREGAMENTO DE DADOS
+# ─────────────────────────────────────────────
+
+@st.cache_data
+def carregar_dados() -> pd.DataFrame:
+    caminho = os.path.join("dados", "BASE_FINAL.csv")
+    df = pd.read_csv(caminho)
+    df.columns = df.columns.str.strip()
+    return _criar_status_bin(df)
+
+
+@st.cache_data
+def carregar_dados_excel() -> pd.DataFrame:
+    """Carrega BASE_FINAL.xlsx e anexa as 12 features de janela deslizante."""
+    caminho = os.path.join("dados", "BASE_FINAL.xlsx")
+    try:
+        df = pd.read_excel(caminho, sheet_name="CLUBES")
+    except Exception:
+        df = pd.read_excel(caminho)
+    df.columns = df.columns.str.strip()
+    df = _criar_status_bin(df)
+
+    df_desemp = _carregar_desempenho()
+    df_desemp, COLS_MERGE = _computar_janelas(df_desemp)
+    df_ext_2025 = _extensao_2025(df, df_desemp)
+    df_desemp_ext = pd.concat([df_desemp[COLS_MERGE], df_ext_2025[COLS_MERGE]], ignore_index=True)
+
+    df = df.merge(df_desemp_ext[COLS_MERGE], on=['Clube', 'Temporada'], how='left')
+    return df
+
+
+# ─────────────────────────────────────────────
+# SEPARAÇÃO DE CONJUNTOS
 # ─────────────────────────────────────────────
 
 def separar_conjuntos(df: pd.DataFrame):
-    """
-    Separa o DataFrame em treino, teste e previsão por período temporal.
-    NUNCA usa separação aleatória (dados de série temporal).
-
-    Treino  : Temporada <= ANO_CORTE_TREINO  (2014 – 2022)
-    Teste   : 2023 <= Temporada < ANO_PREVISAO (2023 – 2024)
-    Previsão: Temporada == ANO_PREVISAO       (2025)
-
-    Args:
-        df: DataFrame completo com coluna 'Temporada'.
-
-    Returns:
-        tuple(df_treino, df_teste, df_prev)
-    """
     df_treino = df[df['Temporada'] <= ANO_CORTE_TREINO].copy()
     df_teste  = df[(df['Temporada'] > ANO_CORTE_TREINO) &
                    (df['Temporada'] < ANO_PREVISAO)].copy()
@@ -134,85 +148,61 @@ def separar_conjuntos(df: pd.DataFrame):
 # ─────────────────────────────────────────────
 
 def treinar_modelo(df_treino: pd.DataFrame):
-    """
-    Treina Regressão Logística com StandardScaler ajustado APENAS no treino.
-
-    Args:
-        df_treino: DataFrame de treino com colunas FEATURES e TARGET.
-
-    Returns:
-        tuple(modelo, scaler)
-    """
-    X_treino = df_treino[FEATURES]
-    y_treino = df_treino[TARGET]
+    mediana_treino = df_treino[FEATURES_JANELA].median()
+    df_tr = df_treino.copy()
+    for col in FEATURES_JANELA:
+        df_tr[col] = df_tr[col].fillna(mediana_treino[col])
 
     scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X_treino)
-
+    X_scaled = scaler.fit_transform(df_tr[FEATURES])
     modelo = LogisticRegression(random_state=42, max_iter=1000, class_weight='balanced')
-    modelo.fit(X_scaled, y_treino)
-
-    return modelo, scaler
+    modelo.fit(X_scaled, df_tr[TARGET])
+    return modelo, scaler, mediana_treino
 
 
 # ─────────────────────────────────────────────
 # PERSISTÊNCIA
 # ─────────────────────────────────────────────
 
-def salvar_modelo(modelo, scaler) -> None:
-    """Salva modelo e scaler em modelos/."""
+def salvar_modelo(modelo, scaler, mediana_treino=None) -> None:
     os.makedirs("modelos", exist_ok=True)
     joblib.dump(modelo, MODELO_PATH)
     joblib.dump(scaler, SCALER_PATH)
-    print(f"Modelo salvo em: {MODELO_PATH}")
-    print(f"Scaler salvo em: {SCALER_PATH}")
+    if mediana_treino is not None:
+        joblib.dump(mediana_treino, MEDIAN_PATH)
 
 
 @st.cache_resource
 def carregar_modelo():
-    """
-    Carrega modelo e scaler salvos em disco.
-
-    Returns:
-        tuple(modelo, scaler)
-    """
     modelo = joblib.load(MODELO_PATH)
     scaler = joblib.load(SCALER_PATH)
-    return modelo, scaler
+    mediana = joblib.load(MEDIAN_PATH) if os.path.exists(MEDIAN_PATH) else None
+    return modelo, scaler, mediana
 
 
 # ─────────────────────────────────────────────
 # AVALIAÇÃO
 # ─────────────────────────────────────────────
 
-def avaliar_modelo(modelo, scaler, df_teste: pd.DataFrame) -> dict:
-    """
-    Avalia o modelo no conjunto de teste.
+def avaliar_modelo(modelo, scaler, df_teste: pd.DataFrame, mediana_treino=None) -> dict:
+    df_te = df_teste.copy()
+    if mediana_treino is not None:
+        for col in FEATURES_JANELA:
+            if col in df_te.columns:
+                df_te[col] = df_te[col].fillna(mediana_treino[col])
+            else:
+                df_te[col] = mediana_treino[col]
 
-    Args:
-        modelo: Modelo treinado.
-        scaler: Scaler ajustado no treino.
-        df_teste: DataFrame de teste com FEATURES e TARGET.
-
-    Returns:
-        dict com keys: acuracia, mae, rmse, relatorio
-    """
-    X_teste = scaler.transform(df_teste[FEATURES])
-    y_teste = df_teste[TARGET]
-
-    y_pred = modelo.predict(X_teste)
-
-    acuracia = accuracy_score(y_teste, y_pred)
-    mae      = mean_absolute_error(y_teste, y_pred)
-    rmse     = np.sqrt(mean_squared_error(y_teste, y_pred))
-    relatorio = classification_report(y_teste, y_pred,
-                                      target_names=['Permaneceu', 'Rebaixado'])
+    X_teste = scaler.transform(df_te[FEATURES])
+    y_teste = df_te[TARGET]
+    y_pred  = modelo.predict(X_teste)
 
     return {
-        'acuracia':  acuracia,
-        'mae':       mae,
-        'rmse':      rmse,
-        'relatorio': relatorio
+        'acuracia':  accuracy_score(y_teste, y_pred),
+        'mae':       mean_absolute_error(y_teste, y_pred),
+        'rmse':      np.sqrt(mean_squared_error(y_teste, y_pred)),
+        'relatorio': classification_report(y_teste, y_pred,
+                                           target_names=['Permaneceu', 'Rebaixado']),
     }
 
 
@@ -222,24 +212,22 @@ def avaliar_modelo(modelo, scaler, df_teste: pd.DataFrame) -> dict:
 
 def fazer_previsao(dados_entrada_df: pd.DataFrame):
     """
-    Realiza previsão para novos dados usando o modelo salvo.
-
-    Args:
-        dados_entrada_df: DataFrame com as 3 colunas de FEATURES.
-
-    Returns:
-        tuple(previsao, probabilidades)
-            previsao      : array de int (1 = Rebaixado, 0 = Permaneceu)
-            probabilidades: array shape (n, 2)
-                            probabilidades[:, 0] → prob. de permanência
-                            probabilidades[:, 1] → prob. de rebaixamento
+    Realiza previsão. Aceita DataFrames com 3 ou 15 features.
+    Quando apenas as 3 features de elenco são fornecidas, as 12 features de
+    janela deslizante são preenchidas com a mediana do conjunto de treino,
+    representando um clube de desempenho histórico médio.
     """
-    modelo, scaler = carregar_modelo()
+    modelo, scaler, mediana_treino = carregar_modelo()
 
-    dados_filtrados = dados_entrada_df[FEATURES]
-    dados_scaled    = scaler.transform(dados_filtrados)
+    df_in = dados_entrada_df.copy()
+    for col in FEATURES_JANELA:
+        if col not in df_in.columns:
+            val = mediana_treino[col] if mediana_treino is not None else 0.0
+            df_in[col] = val
+        elif mediana_treino is not None:
+            df_in[col] = df_in[col].fillna(mediana_treino[col])
 
-    previsao      = modelo.predict(dados_scaled)
+    dados_scaled = scaler.transform(df_in[FEATURES])
+    previsao     = modelo.predict(dados_scaled)
     probabilidade = modelo.predict_proba(dados_scaled)
-
     return previsao, probabilidade

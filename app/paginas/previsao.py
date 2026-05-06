@@ -78,9 +78,12 @@ def main():
     # Info card
     st.markdown("""
     <div class="info-box">
-        Modelo de <b>Regressão Logística</b> treinado com dados do Transfermarkt (2014–2022) e
-        validado em 2023–2024 &nbsp;(acurácia&nbsp;77,5&nbsp;% · AUC-ROC&nbsp;0,82). As previsões são baseadas em
-        <b>tamanho do elenco</b>, <b>nº de estrangeiros</b> e <b>valor de mercado total</b>.
+        Modelo de <b>Regressão Logística</b> selecionado após comparação entre 4 algoritmos
+        (LR · Random Forest · XGBoost · LightGBM), treinado com dados do Transfermarkt (2014–2022)
+        e validado em 2023–2024 &nbsp;(acurácia&nbsp;80,0&nbsp;% · AUC-ROC&nbsp;0,828).
+        Utiliza <b>walk-forward validation</b> (5 folds temporais) e <b>15 features</b>:
+        dados de elenco + <b>janelas deslizantes</b> de desempenho (médias das últimas 3 e 5 temporadas
+        de pontos, saldo de gols, gols marcados/sofridos, vitórias e aproveitamento).
     </div>
     """, unsafe_allow_html=True)
 
@@ -179,9 +182,7 @@ def main():
             st.warning("Nenhum dado encontrado para a temporada mais recente.")
             return
 
-        _, probs_2025 = fazer_previsao(
-            df_2025[["Plantel", "Estrangeiros", "Valor de Mercado Total"]]
-        )
+        _, probs_2025 = fazer_previsao(df_2025)
 
         df_rank = df_2025[["Clube"]].copy()
         df_rank["Prob. Rebaixamento (%)"] = [round(p[1] * 100, 2) for p in probs_2025]
@@ -251,9 +252,7 @@ def main():
                 st.dataframe(df_up.head(), use_container_width=True, hide_index=True)
 
                 with st.spinner("Gerando previsões..."):
-                    _, probs_up = fazer_previsao(
-                        df_up[["Plantel", "Estrangeiros", "Valor de Mercado Total"]]
-                    )
+                    _, probs_up = fazer_previsao(df_up)
                     df_up["Prob. Rebaixamento (%)"] = [round(p[1] * 100, 1) for p in probs_up]
                     df_up["Previsão"] = [
                         "Rebaixado" if p[1] > 0.5 else "Permanece" for p in probs_up
