@@ -4,10 +4,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 import os
 
-_AZUL     = "#1e3d59"
-_VERMELHO = "#e53935"
-_VERDE    = "#27ae60"
-_TEMPLATE = "plotly_white"
+_AZUL     = "#4f9cf5"
+_VERMELHO = "#f0524b"
+_VERDE    = "#33c46a"
+_TEMPLATE = "plotly_dark"
 
 _COL_MAP = {
     "Plantel":                "Tamanho do Plantel",
@@ -27,8 +27,13 @@ def _load():
 
 
 def main():
-    st.markdown('<p class="section-title">Análise Descritiva — Brasileirão Série A</p>',
-                unsafe_allow_html=True)
+    st.markdown("""
+    <div class="hero" style="padding:20px 28px 24px;">
+      <div class="hero-tag">Estatística · Temporada</div>
+      <h1 style="font-size:1.55rem;">Análise Descritiva <span class="hero-em">— Brasileirão Série A</span></h1>
+      <p>Estatísticas por temporada: distribuição, comparação e evolução histórica.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     df = _load()
     existentes = [c for c in _NUM_COLS if c in df.columns]

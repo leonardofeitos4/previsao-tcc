@@ -14,9 +14,9 @@ def set_page_configuration():
 
 def show_title():
     st.markdown("""
-    <div class="app-header">
-        <h1>⚽ Previsão de Rebaixamento — Brasileirão Série A 2025</h1>
-        <p>Análise preditiva com Machine Learning &nbsp;·&nbsp; Regressão Logística &nbsp;·&nbsp;
-           Leonardo Feitosa — Ciência de Dados · UFPB</p>
+    <div class="hero">
+      <div class="hero-tag">Análise preditiva · Machine Learning</div>
+      <h1>Previsão de Rebaixamento<span class="hero-em"> — Brasileirão Série A 2025</span></h1>
+      <p>Regressão Logística · Leonardo Feitosa — Ciência de Dados · UFPB</p>
     </div>
     """, unsafe_allow_html=True)

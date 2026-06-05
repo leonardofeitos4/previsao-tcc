@@ -7,11 +7,11 @@ import plotly.graph_objects as go
 from app.utils.processamento import fazer_previsao, carregar_dados_excel
 
 # ── Paleta de cores consistente ──────────────────────────────────────────────
-_AZUL      = "#1e3d59"
-_VERMELHO  = "#e53935"
-_VERDE     = "#27ae60"
-_LARANJA   = "#f57c00"
-_TEMPLATE  = "plotly_white"
+_AZUL      = "#4f9cf5"
+_VERMELHO  = "#f0524b"
+_VERDE     = "#33c46a"
+_LARANJA   = "#e3a93b"
+_TEMPLATE  = "plotly_dark"
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────

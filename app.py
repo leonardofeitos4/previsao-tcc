@@ -1,47 +1,40 @@
 """
-app.py
-------
-Ponto de entrada do aplicativo Streamlit — Previsao de Rebaixamento
-no Brasileirao Serie A 2025.
-
-Estrutura do projeto:
-    app/controllers/ — configuracao e menu lateral
-    app/paginas/     — paginas do aplicativo
-    app/utils/       — processamento, modelos e estilos
-
-Autor: Leonardo Feitosa — Ciencia de Dados / UFPB
+app.py  —  Previsão de Rebaixamento · Brasileirão Série A 2025
+Gera o app React com dados reais e o serve via Streamlit.
 """
+import os, sys
+import streamlit as st
+import streamlit.components.v1 as components
 
-import os
-import sys
-
-# Garante que o diretorio raiz do projeto esteja no path de importacao
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from app.controllers.config import set_page_configuration, show_title
-from app.controllers.sidebar import streamlit_menu, sidebar_content
+st.set_page_config(
+    page_title="Previsão Rebaixamento · Série A 2025",
+    page_icon="⚽",
+    layout="wide",
+)
 
-from app.paginas.previsao import main as main_previsao
-from app.paginas.dados_historicos import main as main_dados
-from app.paginas.analise_sensibilidade import main as main_analise
-from app.paginas.analise_descritiva import main as main_descritiva
+# Oculta todo o chrome do Streamlit — o app é o HTML
+st.markdown("""
+<style>
+#MainMenu,footer,header,[data-testid="stToolbar"],[data-testid="stDecoration"]{display:none!important;}
+.main,.block-container{padding:0!important;max-width:100%!important;}
+iframe{border:none!important;}
+</style>
+""", unsafe_allow_html=True)
 
-# Configuracao de pagina — deve vir antes de qualquer outro st.*
-set_page_configuration()
-show_title()
+HTML_PATH = os.path.join(os.path.dirname(__file__), "previsao_rebaixamento.html")
 
-# Menu lateral
-selected_option = streamlit_menu()
+# Gera o HTML com dados reais (se ainda não existe ou usuário pede regenerar)
+need_gen = not os.path.exists(HTML_PATH)
 
-# Roteamento de paginas
-if selected_option == "Previsao":
-    main_previsao()
-elif selected_option == "Dados Historicos":
-    main_dados()
-elif selected_option == "Analise de Sensibilidade":
-    main_analise()
-elif selected_option == "Analise Descritiva":
-    main_descritiva()
+if need_gen:
+    with st.spinner("Gerando app com dados reais do modelo..."):
+        from gerar_app_real import gerar
+        gerar()
 
-# Conteudo fixo da barra lateral
-sidebar_content()
+# Servir o HTML
+with open(HTML_PATH, encoding="utf-8") as f:
+    html_content = f.read()
+
+components.html(html_content, height=900, scrolling=True)

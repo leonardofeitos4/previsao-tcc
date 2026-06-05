@@ -6,10 +6,10 @@ import plotly.graph_objects as go
 
 from app.utils.processamento import fazer_previsao
 
-_AZUL     = "#1e3d59"
-_VERMELHO = "#e53935"
-_VERDE    = "#27ae60"
-_TEMPLATE = "plotly_white"
+_AZUL     = "#4f9cf5"
+_VERMELHO = "#f0524b"
+_VERDE    = "#33c46a"
+_TEMPLATE = "plotly_dark"
 
 # Valores-base (médias históricas da Série A)
 _BASE = {"Plantel": 28, "Estrangeiros": 4, "Valor de Mercado Total": 85.0}
@@ -91,8 +91,13 @@ def _linha(df, x, cor, titulo, linha_base=None):
 
 
 def main():
-    st.markdown('<p class="section-title">Análise de Sensibilidade</p>',
-                unsafe_allow_html=True)
+    st.markdown("""
+    <div class="hero" style="padding:20px 28px 24px;">
+      <div class="hero-tag">Interpretação · Sensibilidade</div>
+      <h1 style="font-size:1.55rem;">Análise de Sensibilidade</h1>
+      <p>Efeito isolado de cada variável na probabilidade de rebaixamento.</p>
+    </div>
+    """, unsafe_allow_html=True)
     st.markdown("""
     <div class="info-box">
         Mostra como cada variável independente influencia a probabilidade de rebaixamento,
