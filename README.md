@@ -1,67 +1,145 @@
-# ⚽ Previsão de Rebaixamento - Brasileirão Série A 2025
+# ⚽ Previsão de Rebaixamento — Brasileirão Série A (TCC)
 
-Este repositório apresenta um aplicativo interativo desenvolvido com **Streamlit**, voltado para previsão do risco de rebaixamento de clubes da Série A do Brasileirão em 2025. O app utiliza um modelo supervisionado de **Regressão Logística** treinado com dados históricos, proporcionando uma experiência acessível e visual para usuários não técnicos.
+> **TCC — Ciência de Dados, UFPB/CCSA** · Leonardo Feitosa Barroso · Orientador: Prof. Hilton Martins
 
-🔗 **Acesse o app online:**  
-👉 [https://previsao-rebaixamentobrasileirao2025-seriea.streamlit.app/](https://previsao-rebaixamentobrasileirao2025-seriea.streamlit.app/)
+Este repositório contém o Trabalho de Conclusão de Curso sobre **previsão de rebaixamento no Campeonato Brasileiro Série A** com técnicas de *Machine Learning*, organizado segundo o padrão do repositório-modelo [lema-ufpb/modelo-academico](https://github.com/lema-ufpb/modelo-academico), com foco em **reprodutibilidade** e boas práticas.
 
-## 🧭 Funcionalidades Principais
-- Inserção de dados via formulário ou upload de CSV
-- Predição do risco de rebaixamento (probabilidades e classificação)
-- Análise de sensibilidade com diferentes cenários
-- Visualizações complementares (tabelas e gráficos interativos)
-- Explicação clara sobre o funcionamento do modelo e limitações
+🔗 **Aplicativo online (Streamlit):**
+👉 [previsao-rebaixamentobrasileirao2025-seriea.streamlit.app](https://previsao-rebaixamentobrasileirao2025-seriea.streamlit.app/)
 
-## 🧠 Sobre o Modelo
-- **Tipo:** Regressão Logística
-- **Variáveis:**  
-  - Número de Jogadores (`Plantel`)
-  - Número de Estrangeiros (`Estrangeiros`)
-  - Valor de Mercado Total (`Valor de Mercado Total`)
-- **Métricas de Desempenho:**  
-  - Acurácia Média: **0.89** (indicando que o modelo acerta a classificação em aproximadamente 89% das vezes)
-  - MAE Médio: **0.11** (erro médio absoluto entre as probabilidades previstas e reais)
-  - RMSE Médio: **0.32** (raiz do erro médio quadrático, indicando a magnitude do erro)
-- **Objetivo:** Apoiar decisões e análises preditivas sobre desempenho e risco de rebaixamento.  
-- **Limitações:** 
-  - Não inclui fatores imprevisíveis como lesões, clima ou trocas técnicas.
-  - O modelo foi treinado com dados históricos e pode não refletir mudanças significativas nos times ou na dinâmica do campeonato.
+---
 
-## 📊 Dados Utilizados
-A base de dados utilizada para treinar o modelo inclui informações sobre os clubes da Série A, como:
-- `Clube`: Nome do clube
-- `Plantel`: Número de jogadores no elenco
-- `Estrangeiros`: Número de jogadores estrangeiros no elenco
-- `Valor de Mercado Total`: Valor total de mercado do elenco
-- `Pontos`: Pontuação obtida pelo clube em uma temporada
-- `Situacao`: Classificação final do clube na temporada (por exemplo, Top4, Rebaixado)
-- `Status`: Indicador de rebaixamento (1 para rebaixado, 0 para não rebaixado)
-Exemplo das primeiras linhas da base de dados:
+## 🧠 Sobre o Projeto
 
-| Clube     | Plantel | ø Idade | Estrangeiros | ø Valor de Mercado | Valor de Mercado Total | Temporada | Pontos | Situação | Status |
-|-----------|---------|---------|--------------|---------------------|-------------------------|------------|--------|----------|--------|
-| São Paulo | 45      | 25      | 6            | 3.33                | 149.65                  | 2014       | 70     | Top4     | 1.0    |
+Quatro modelos de classificação binária — **Regressão Logística, Random Forest, XGBoost e LightGBM** — são comparados sobre **15 features** que combinam:
 
+- **Dados de elenco** (Transfermarkt): plantel, estrangeiros, valor de mercado total
+- **Janelas deslizantes**: médias de desempenho (pontos, saldo de gols, gols pró/contra, vitórias, aproveitamento) das últimas 3 e 5 temporadas, calculadas com `shift(1).rolling()` para evitar *data leakage*
 
+**Metodologia:** validação *walk-forward* (5 folds temporais, 2014–2022) + otimização com `RandomizedSearchCV` + `TimeSeriesSplit`, avaliação final em conjunto de teste independente (2023–2024).
 
-## 📦 Instalação de Dependências
-Para garantir que o aplicativo funcione corretamente, é essencial instalar todas as bibliotecas Python necessárias listadas no arquivo `requirements.txt`.
-### 🔧 Passos para instalação:
-1. **(Opcional, mas recomendado)** Crie um ambiente virtual:
+**Resultados no teste (2023–2024):**
+
+| Rank | Modelo | AUC-ROC | Acurácia |
+|---|---|---|---|
+| 1º | **LightGBM** | **0.877** | 82,5% |
+| 2º | Random Forest | 0.844 | 80,0% |
+| 3º | Regressão Logística | 0.828 | 80,0% |
+| 4º | XGBoost | 0.652 | 82,5% |
+
+A **Regressão Logística** é o modelo final adotado para a previsão 2025, pela maior estabilidade temporal no walk-forward (0.794 ± 0.058) e pela interpretabilidade dos coeficientes.
+
+---
+
+## 📂 Estrutura do Repositório
+
+```text
+previsao-tcc/
+├── README.md                       ← Você está aqui
+│
+├── dados/
+│   ├── brutos/                     ← Dados originais coletados (imutáveis)
+│   │   ├── dados_brutos_transfermarkt.xlsx
+│   │   ├── tabela_classificacao_brasileirao.csv
+│   │   └── tabela_desempenho_brasileirao.xlsx
+│   └── processados/
+│       └── BASE_FINAL.xlsx         ← Base final (fonte única de verdade)
+│
+├── notebooks/                      ← Pipeline de análise (00 a 07)
+│   ├── 00_coleta_dados.ipynb       ← Web scraping do Transfermarkt
+│   ├── 01_analise_exploratoria.ipynb
+│   ├── 02_preprocessamento.ipynb   ← 15 features + janelas deslizantes
+│   ├── 03_modelo_logistica.ipynb   ← Walk-forward + tuning
+│   ├── 04_modelo_random_forest.ipynb
+│   ├── 05_modelo_svm.ipynb
+│   ├── 06_comparacao_modelos.ipynb ← 4 modelos: LR, RF, XGBoost, LightGBM
+│   └── 07_previsao_2025.ipynb      ← Previsão final da temporada 2025
+│
+├── scripts/                        ← Scripts auxiliares
+│   ├── gerar_figuras_artigo.py     ← Regenera as figuras do artigo a partir dos modelos salvos
+│   ├── gerar_relatorio_v2.py
+│   └── gerar_app_real.py
+│
+├── modelos/                        ← Modelos treinados (.pkl) + scaler + medianas
+│
+├── resultados/
+│   ├── figuras/                    ← Gráficos gerados (ROC, matrizes, previsão 2025...)
+│   └── relatorios/                 ← Relatórios técnicos (HTML/DOCX)
+│
+├── tex/
+│   └── tcc_artigo/                 ← 📄 ARTIGO DO TCC (LaTeX, ABNT via abntex2)
+│       ├── main.tex                ← Texto completo do artigo
+│       ├── referencias.bib         ← Referências bibliográficas
+│       ├── figuras/                ← Figuras do artigo
+│       └── tabelas/                ← Tabelas em .tex incluídas no texto
+│
+├── docs/                           ← Templates de gestão da pesquisa (modelo LEMA-UFPB)
+│   ├── guia_escrita_cientifica.md
+│   ├── diario_pesquisa.md
+│   ├── reuniao_orientacao.md
+│   └── checklist_defesa.md ...
+│
+├── app.py                          ← Aplicativo Streamlit (entrada principal)
+├── app/                            ← Código do aplicativo (páginas, utils, controllers)
+├── requirements.txt                ← Dependências do app
+└── runtime.txt                     ← Versão do Python (Streamlit Cloud)
+```
+
+---
+
+## 📄 Compilar o Artigo (LaTeX)
+
+O artigo está em `tex/tcc_artigo/main.tex`, no formato **TCC-artigo** com classe `abntex2` (normas ABNT). Para compilar:
+
+```bash
+cd tex/tcc_artigo
+pdflatex main.tex
+bibtex main
+pdflatex main.tex
+pdflatex main.tex
+```
+
+Requisitos: distribuição LaTeX ([MiKTeX](https://miktex.org/download) no Windows) com os pacotes `abntex2` e `abntex2cite`. Alternativa sem instalação: [Overleaf](https://www.overleaf.com) (envie a pasta `tex/tcc_artigo/`) ou [Tectonic](https://tectonic-typesetting.github.io).
+
+Para regenerar as figuras do artigo a partir dos modelos salvos:
+
+```bash
+python scripts/gerar_figuras_artigo.py
+```
+
+---
+
+## 🖥️ Executar o Aplicativo Streamlit
+
+1. *(Opcional)* Crie um ambiente virtual:
    ```bash
    python -m venv venv
+   venv\Scripts\activate        # Windows
+   source venv/bin/activate     # macOS/Linux
+   ```
+2. Instale as dependências:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Execute:
+   ```bash
+   streamlit run app.py
+   ```
 
-- No Windows:
-    - venv\Scripts\activate
+### Páginas do aplicativo
 
-- No macOS/Linux:
-   - source venv/bin/activate
-   
-## Instale as dependências do projeto
+| Página | Descrição |
+|---|---|
+| **Previsão de Rebaixamento** | Simulador individual + Ranking 2025 + Upload CSV em lote |
+| **Análise Descritiva** | Exploração interativa da base histórica |
+| **Análise de Sensibilidade** | Impacto de cada variável no risco previsto |
+| **Dados Históricos** | Tabela completa 2014–2025 com filtros |
 
-- pip install -r requirements.txt
+---
 
-- Execute o aplicativo com o comando:
-    - streamlit run app.py
+## 🔁 Reprodutibilidade
 
-
+- Semente aleatória fixa (`random_state=42`) em todos os experimentos
+- Separação temporal estrita: treino 2014–2022 · teste 2023–2024 · previsão 2025
+- Imputação (mediana) e `StandardScaler` ajustados **somente no treino** — sem *data leakage*
+- Dados brutos imutáveis em `dados/brutos/`; pipeline completo nos notebooks 00→07

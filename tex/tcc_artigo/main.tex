@@ -1,0 +1,308 @@
+% ============================================================
+% TCC em formato de artigo — Previsão de Rebaixamento no
+% Brasileirão Série A (baseado no modelo lema-ufpb/modelo-academico)
+% Compilar: pdflatex main.tex && bibtex main && pdflatex main.tex && pdflatex main.tex
+% ============================================================
+\documentclass[
+    article,
+    12pt,
+    oneside,
+    a4paper,
+    english,
+    brazilian
+    ]{abntex2}
+
+% ============================================================
+% PACOTES
+% ============================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{textcomp}
+\usepackage{geometry}
+\usepackage{indentfirst}
+\usepackage{setspace}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{graphicx}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage{subcaption}
+\usepackage{float}
+
+% Matemática
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% Citações ABNT
+\usepackage[alf]{abntex2cite}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{csquotes}
+
+% Atalho para o símbolo do euro
+\providecommand{\euro}{\texteuro}
+
+% ============================================================
+% CONFIGURAÇÕES
+% ============================================================
+\geometry{top=3cm, left=3cm, right=2cm, bottom=2cm}
+
+% Abstract no padrão ABNT (sem recuos, fonte do corpo do texto)
+\setlength{\absleftindent}{0cm}
+\setlength{\absrightindent}{0cm}
+\renewcommand{\abstracttextfont}{\normalfont\normalsize}
+
+\graphicspath{{figuras/}}
+
+% ============================================================
+% METADADOS
+% ============================================================
+\titulo{%
+    \vspace*{-3.5cm}
+    \begin{minipage}{1.0\textwidth}
+        \centering
+        \includegraphics[width=0.1\textwidth]{brasao_ufpb.png}
+    \end{minipage}%
+    \vspace{0.5cm}
+    \begin{minipage}{1.0\textwidth}
+        \centering
+        \normalsize
+        \textbf{UNIVERSIDADE FEDERAL DA PARAÍBA -- UFPB} \\
+        \textbf{CENTRO DE CIÊNCIAS SOCIAIS APLICADAS -- CCSA} \\
+        \textbf{CURSO DE BACHARELADO EM CIÊNCIA DE DADOS PARA NEGÓCIOS}
+    \end{minipage}%
+    \vspace{1cm}
+    \Large \textbf{Previsão de Rebaixamento no Campeonato Brasileiro Série A: Uma Comparação de Modelos de \textit{Machine Learning} com Validação \textit{Walk-Forward}}
+}
+\providecommand{\theforeigntitle}{}
+
+\autor{
+    \textbf{Leonardo Feitosa Barroso} \\
+    \small \texttt{leonardo.feitosa@academico.ufpb.br} \\
+    \vspace{0.5cm} \\
+    Orientador: Prof. Hilton Martins \\
+}
+
+\data{\today}
+
+\begin{document}
+
+\pretextual
+\maketitle
+\newpage
+
+% ============================================================
+% RESUMO
+% ============================================================
+\begin{resumo}
+\noindent O rebaixamento à Série B representa uma das maiores perdas esportivas e financeiras que um clube de futebol brasileiro pode sofrer, com impactos diretos sobre receitas de transmissão, patrocínios e valor de mercado do elenco. Este trabalho desenvolve e compara modelos de \textit{Machine Learning} para prever, antes do início da temporada, quais clubes apresentam maior risco de rebaixamento no Campeonato Brasileiro Série A. Foram avaliados quatro algoritmos de classificação binária --- Regressão Logística, \textit{Random Forest}, XGBoost e LightGBM --- sobre um conjunto de 15 \textit{features} que combina dados financeiros do elenco, coletados do portal Transfermarkt, com janelas deslizantes de desempenho das três e cinco temporadas anteriores. A validação utilizou o esquema \textit{walk-forward}, que respeita a ordem cronológica dos dados, e a otimização de hiperparâmetros foi realizada com \textit{RandomizedSearchCV} combinado a \textit{TimeSeriesSplit}. No conjunto de teste independente (2023--2024), o LightGBM obteve o melhor AUC-ROC (0,877), enquanto a Regressão Logística apresentou a maior estabilidade temporal na validação \textit{walk-forward} (média de 0,794 $\pm$ 0,058). A previsão para a temporada 2025 aponta Juventude, Sport Recife, Vitória e Mirassol como os clubes de maior risco. O estudo contribui com um \textit{pipeline} reprodutível para previsão esportiva com dados temporais e evidencia, empiricamente, a inadequação da acurácia como métrica única em problemas com classes desbalanceadas.
+\newline
+\noindent \textbf{Palavras-chave:} Aprendizado de Máquina. Previsão Esportiva. Rebaixamento. Futebol. Validação \textit{Walk-Forward}.
+\end{resumo}
+
+\begin{otherlanguage*}{english}
+\begin{resumo}[Abstract]
+\noindent Relegation to Série B is one of the greatest sporting and financial losses a Brazilian football club can suffer, directly affecting broadcasting revenues, sponsorships, and squad market value. This study develops and compares Machine Learning models to predict, before the start of the season, which clubs face the highest relegation risk in the Brazilian Série A championship. Four binary classification algorithms were evaluated --- Logistic Regression, Random Forest, XGBoost, and LightGBM --- over a set of 15 features combining squad financial data, collected from the Transfermarkt portal, with sliding windows of performance from the previous three and five seasons. Validation used the walk-forward scheme, which respects the chronological order of the data, and hyperparameter optimization was performed with RandomizedSearchCV combined with TimeSeriesSplit. On the independent test set (2023--2024), LightGBM achieved the best AUC-ROC (0.877), while Logistic Regression showed the highest temporal stability in walk-forward validation (mean 0.794 $\pm$ 0.058). The forecast for the 2025 season points to Juventude, Sport Recife, Vitória, and Mirassol as the clubs at highest risk. The study contributes a reproducible pipeline for sports prediction with temporal data and empirically demonstrates the inadequacy of accuracy as a sole metric in imbalanced classification problems.
+\newline
+\noindent \textbf{Keywords:} Machine Learning. Sports Prediction. Relegation. Football. Walk-Forward Validation.
+\end{resumo}
+\end{otherlanguage*}
+\newpage
+
+% ============================================================
+% 1. INTRODUÇÃO
+% ============================================================
+\textual
+
+\section{Introdução}
+
+O futebol profissional brasileiro opera sob um regime de promoção e rebaixamento em que, ao final de cada edição do Campeonato Brasileiro Série A, os quatro últimos colocados são rebaixados à Série B. Para os clubes, as consequências ultrapassam o campo esportivo: a queda de divisão implica redução expressiva das receitas de transmissão televisiva, perda de patrocínios, desvalorização do elenco e dificuldade de retenção de atletas, efeitos que frequentemente se prolongam por várias temporadas. Antecipar o risco de rebaixamento é, portanto, uma informação estratégica para a gestão esportiva e financeira dos clubes, permitindo ações preventivas como reforços pontuais, renegociação de contratos e planejamento orçamentário.
+
+Nesse contexto, técnicas de \textit{Machine Learning} vêm sendo aplicadas com sucesso à previsão de resultados esportivos, tanto em nível de partida quanto de temporada \cite{bunker2019, baboota2019}. A literatura, contudo, concentra-se majoritariamente na previsão de resultados de jogos individuais em ligas europeias \cite{constantinou2012}, havendo lacuna de estudos que abordem a previsão de rebaixamento no campeonato brasileiro utilizando exclusivamente informações disponíveis \textbf{antes do início da temporada} --- cenário em que a previsão tem maior valor prático para a gestão. Além disso, dados de valor de mercado de elencos, como os disponibilizados pelo portal Transfermarkt, mostraram-se preditores relevantes de desempenho esportivo \cite{muller2017}, mas ainda são pouco explorados em combinação com o histórico recente de desempenho dos clubes.
+
+O objetivo geral deste trabalho é desenvolver e comparar modelos de \textit{Machine Learning} capazes de estimar, antes do início da temporada, a probabilidade de rebaixamento de cada clube participante do Campeonato Brasileiro Série A.
+
+Como objetivos específicos, busca-se: (i) construir uma base de dados histórica (2014--2025) combinando informações financeiras de elenco e desempenho esportivo por temporada; (ii) realizar engenharia de \textit{features} com janelas deslizantes que resumam o histórico recente de cada clube sem vazamento de dados (\textit{data leakage}); (iii) treinar e otimizar quatro algoritmos de classificação binária (Regressão Logística, \textit{Random Forest}, XGBoost e LightGBM) com validação que respeite a ordem temporal dos dados; (iv) comparar os modelos em um conjunto de teste independente utilizando métricas adequadas a classes desbalanceadas; e (v) aplicar o modelo final à previsão da temporada 2025.
+
+O restante do texto está organizado da seguinte forma: a Seção~2 apresenta a fundamentação teórica e os trabalhos correlatos; a Seção~3 descreve a metodologia, incluindo coleta de dados, engenharia de \textit{features}, validação e otimização; a Seção~4 apresenta e discute os resultados; e a Seção~5 traz as considerações finais, com limitações e propostas de trabalhos futuros.
+
+% ============================================================
+% 2. FUNDAMENTAÇÃO TEÓRICA
+% ============================================================
+\section{Fundamentação Teórica}
+
+\subsection{Classificação Supervisionada}
+
+Segundo \citeonline{hastie2009}, os métodos de classificação supervisionada buscam aprender, a partir de um conjunto de treinamento $\{(\mathbf{x}_i, y_i)\}_{i=1}^n$, uma função que mapeie as variáveis preditoras $\mathbf{X} \in \mathbb{R}^p$ à variável-alvo $Y$, de modo a generalizar para observações não vistas. No problema aqui tratado, a variável-alvo é binária: $Y = 1$ indica que o clube foi rebaixado ao final da temporada e $Y = 0$ indica que permaneceu na Série A. A escolha do algoritmo deve considerar o compromisso entre viés e variância, sendo recomendável avaliar múltiplos modelos antes de selecionar o mais adequado ao problema \cite{james2023}.
+
+\subsection{Regressão Logística}
+
+A Regressão Logística \cite{cox1958} modela a probabilidade de pertencimento à classe de interesse por meio da função sigmoide, conforme a Equação~\ref{eq:logistic}:
+
+\begin{equation}
+    P(Y = 1 \mid \mathbf{X}) = \frac{1}{1 + e^{-(\beta_0 + \boldsymbol{\beta}^T \mathbf{X})}}
+    \label{eq:logistic}
+\end{equation}
+
+Sua principal vantagem é a interpretabilidade: cada coeficiente $\beta_j$ indica a direção e a magnitude do efeito da respectiva variável sobre o risco previsto, o que é particularmente valioso quando os resultados precisam subsidiar decisões de gestão \cite{james2023}.
+
+\subsection{\textit{Random Forest}}
+
+O \textit{Random Forest} \cite{breiman2001} constrói um conjunto (\textit{ensemble}) de árvores de decisão treinadas sobre amostras \textit{bootstrap} dos dados, selecionando em cada divisão um subconjunto aleatório de preditoras. A predição final é obtida por agregação das árvores, o que reduz a variância do modelo e o torna robusto a \textit{outliers} e a relações não lineares.
+
+\subsection{\textit{Gradient Boosting}: XGBoost e LightGBM}
+
+Os métodos de \textit{boosting} constroem árvores sequencialmente, com cada nova árvore corrigindo os erros das anteriores. O XGBoost \cite{chen2016} introduziu regularização explícita e otimizações computacionais que o tornaram referência em problemas com dados tabulares. O LightGBM \cite{ke2017} aprimora essa família de algoritmos com amostragem baseada em gradiente (GOSS) e agrupamento exclusivo de \textit{features} (EFB), além do crescimento de árvore por folha, resultando em treinamento mais eficiente com desempenho competitivo ou superior.
+
+\subsection{Métricas de Avaliação para Classes Desbalanceadas}
+
+Em problemas nos quais uma das classes é minoritária --- como o rebaixamento, que atinge apenas 4 dos 20 clubes por temporada ($\sim$20\% das observações) --- a acurácia isolada é uma métrica enganosa, pois um classificador trivial que sempre prevê a classe majoritária já alcança acurácia igual à prevalência dessa classe \cite{he2009, geron2022}. Por essa razão, este trabalho adota como métrica principal a área sob a curva ROC (AUC-ROC), que mede a capacidade do modelo de ordenar corretamente as observações por risco, independentemente do limiar de decisão \cite{fawcett2006}. Um AUC-ROC de 0,5 equivale a um classificador aleatório, e 1,0 a um classificador perfeito. Complementarmente, são reportados matriz de confusão, precisão, \textit{recall} e F1-\textit{score} por classe.
+
+\subsection{Validação para Dados Temporais}
+
+A validação cruzada tradicional ($k$-\textit{fold}) pressupõe observações independentes e identicamente distribuídas, hipótese violada em dados com estrutura temporal: embaralhar as temporadas permitiria ao modelo aprender com o futuro para prever o passado \cite{bergmeir2012}. A alternativa adequada é a validação \textit{walk-forward} (ou de origem móvel), na qual o modelo é sempre treinado com dados anteriores ao período de validação, simulando seu uso real em produção \cite{tashman2000}. Essa abordagem corresponde ao \textit{TimeSeriesSplit} da biblioteca \textit{scikit-learn} \cite{pedregosa2011}.
+
+\subsection{Trabalhos Correlatos}
+
+\citeonline{bunker2019} propõem um arcabouço metodológico para previsão de resultados esportivos com \textit{Machine Learning}, destacando a importância de separar \textit{features} conhecidas antes da partida daquelas obtidas após sua realização --- princípio análogo ao adotado neste trabalho ao restringir os preditores a informações pré-temporada. \citeonline{baboota2019} aplicam engenharia de \textit{features} baseada na forma recente das equipes para prever resultados da \textit{Premier League} inglesa, obtendo ganhos expressivos com variáveis de desempenho acumulado --- estratégia que fundamenta as janelas deslizantes aqui utilizadas. \citeonline{constantinou2012} desenvolvem o modelo pi-football, baseado em redes bayesianas, para prognósticos de partidas, evidenciando o valor de combinar dados objetivos e conhecimento de domínio. Por fim, \citeonline{muller2017} demonstram que valores de mercado estimados coletivamente, como os do Transfermarkt, são preditores robustos de desempenho no futebol, o que justifica seu uso como \textit{proxy} da capacidade financeira dos clubes.
+
+Este trabalho diferencia-se dos correlatos em três aspectos: (i) o objeto de previsão é o rebaixamento ao final da temporada, e não o resultado de partidas individuais; (ii) o contexto é o campeonato brasileiro, menos explorado na literatura que as ligas europeias; e (iii) todas as \textit{features} estão disponíveis antes do início da temporada, o que confere valor prático à previsão para o planejamento dos clubes.
+
+% ============================================================
+% 3. METODOLOGIA
+% ============================================================
+\section{Metodologia}
+
+Esta pesquisa classifica-se como aplicada, de abordagem quantitativa e caráter descritivo-preditivo \cite{gil2019}. O fluxo metodológico segue o \textit{pipeline} padrão de Ciência de Dados: coleta de dados, engenharia de \textit{features} com janelas deslizantes, pré-processamento sem vazamento de dados, validação \textit{walk-forward}, otimização de hiperparâmetros, avaliação em teste independente e aplicação à temporada 2025. Todo o código, os dados e os experimentos estão disponíveis em repositório público\footnote{Disponível em: \url{https://github.com/leonardofeitos4/previsao-tcc}}, garantindo a reprodutibilidade integral dos resultados (semente aleatória fixa igual a 42 em todos os experimentos).
+
+\subsection{Coleta de Dados}
+
+Os dados foram coletados do portal Transfermarkt \cite{transfermarkt2025} por meio de raspagem automatizada (\textit{web scraping}) com as bibliotecas \textit{requests} e \textit{BeautifulSoup}, em duas frentes: (i) dados de elenco por clube e temporada --- número de jogadores, quantidade de estrangeiros e valor de mercado total; e (ii) estatísticas de desempenho por temporada --- posição final, vitórias, empates, derrotas, gols marcados e sofridos, saldo de gols, pontos e aproveitamento. A base cobre as temporadas de 2014 a 2024 para treinamento e teste (11 temporadas $\times$ 20 clubes = 220 observações rotuladas) e a temporada 2025 para previsão (20 clubes). A temporada 2025 foi deliberadamente excluída da coleta de desempenho, pois seus resultados constituem exatamente o que se deseja prever --- incluí-los configuraria vazamento de dados.
+
+\subsection{Engenharia de \textit{Features}}
+
+Cada observação corresponde a um clube em uma temporada e é descrita por 15 \textit{features}, detalhadas na Tabela~\ref{tab:features}: 3 variáveis de elenco (estáticas, conhecidas no início da temporada) e 12 variáveis de janela deslizante, que resumem o desempenho médio do clube nas 3 e nas 5 temporadas anteriores para seis métricas (pontos, saldo de gols, gols marcados, gols sofridos, vitórias e aproveitamento).
+
+\input{tabelas/tab_features}
+
+As janelas deslizantes adicionam ao modelo a ``memória'' do desempenho recente em campo, complementando os dados estáticos de elenco, que descrevem o que o clube \emph{tem}, mas não o que ele \emph{fez}. Para garantir a ausência de vazamento temporal, o cálculo das médias da temporada $T$ utiliza exclusivamente as temporadas $T-1$ a $T-w$ (implementação com \texttt{shift(1).rolling()}), de forma que nenhuma informação da própria temporada prevista participa de suas \textit{features}.
+
+\subsection{Pré-processamento e Tratamento de Dados Faltantes}
+
+Clubes recém-promovidos da Série B não possuem histórico completo na Série A, o que gera valores ausentes nas \textit{features} de janela deslizante. Esses valores foram imputados com a \textbf{mediana calculada exclusivamente no conjunto de treinamento}, decisão que se justifica por três razões: (i) a mediana é robusta a valores extremos, adequada a distribuições assimétricas como as de desempenho esportivo; (ii) calculá-la apenas no treino evita que estatísticas do conjunto de teste contaminem o ajuste do modelo; e (iii) a imputação por um valor central é conservadora --- atribui ao clube sem histórico um comportamento ``típico'', sem induzir viés otimista ou pessimista. Em seguida, todas as \textit{features} foram padronizadas com \textit{StandardScaler}, com parâmetros ajustados somente no conjunto de treinamento e aplicados aos demais conjuntos, novamente evitando vazamento de dados.
+
+O desbalanceamento de classes ($\sim$20\% de rebaixados) foi tratado no nível dos algoritmos, com ponderação inversa à frequência das classes (\texttt{class\_weight='balanced'} na Regressão Logística, no \textit{Random Forest} e no LightGBM; \texttt{scale\_pos\_weight}=4 no XGBoost).
+
+\subsection{Separação Temporal e Validação \textit{Walk-Forward}}
+
+Os dados rotulados foram divididos temporalmente em treinamento (2014--2022, 180 observações) e teste (2023--2024, 40 observações, sendo 8 rebaixamentos). Sobre o conjunto de treinamento aplicou-se a validação \textit{walk-forward} com cinco \textit{folds} de janela expansiva, conforme a Tabela~\ref{tab:folds}: em cada \textit{fold}, o modelo é treinado com todas as temporadas até o ano anterior e validado na temporada seguinte, com imputação e padronização recalculadas dentro de cada \textit{fold} para preservar a integridade temporal.
+
+\input{tabelas/tab_folds_walkforward}
+
+\subsection{Seleção de Algoritmos e Otimização de Hiperparâmetros}
+
+Foram selecionados quatro algoritmos que cobrem o espectro de complexidade usual em dados tabulares: a Regressão Logística, como modelo linear interpretável de referência; o \textit{Random Forest}, como \textit{ensemble} de \textit{bagging}; e XGBoost e LightGBM, como representantes do estado da arte em \textit{gradient boosting} para dados tabulares \cite{chen2016, ke2017}. Redes neurais profundas foram deliberadamente excluídas: com apenas $\sim$220 observações, modelos com grande número de parâmetros tendem ao sobreajuste e não dispõem de volume de dados suficiente para exibir suas vantagens \cite{geron2022}.
+
+A otimização de hiperparâmetros utilizou \textit{RandomizedSearchCV} com 30 candidatos por modelo, validação interna \textit{TimeSeriesSplit} de 5 \textit{folds} e AUC-ROC como critério de seleção. A busca aleatória foi preferida à busca em grade (\textit{GridSearchCV}) porque, para um mesmo orçamento computacional, explora o espaço de hiperparâmetros de forma mais eficiente, especialmente quando apenas algumas dimensões são realmente relevantes \cite{bergstra2012}; métodos de otimização bayesiana foram considerados, mas o ganho esperado não justificaria a complexidade adicional para um espaço de busca deste porte.
+
+% ============================================================
+% 4. RESULTADOS E DISCUSSÃO
+% ============================================================
+\section{Resultados e Discussão}
+
+\subsection{Validação \textit{Walk-Forward}}
+
+A Tabela~\ref{tab:walkforward} apresenta o AUC-ROC de cada modelo em cada \textit{fold} da validação \textit{walk-forward}. A Regressão Logística obteve a maior média (0,794) com o menor desvio padrão ($\pm$0,058), evidenciando comportamento estável ao longo das temporadas. O LightGBM, por sua vez, apresentou a maior variância entre \textit{folds} ($\pm$0,151), com desempenho que oscila de 0,438 (temporada 2020, marcada pelas condições atípicas da pandemia) a 0,906 (2022). Essa instabilidade sugere que modelos de \textit{boosting}, mais flexíveis, são também mais sensíveis a mudanças de regime nos dados --- observação que corrobora a recomendação de \citeonline{bergmeir2012} de avaliar preditores temporais em múltiplas janelas de validação, e não em um único corte.
+
+\input{tabelas/tab_walkforward_auc}
+
+\subsection{Hiperparâmetros Selecionados}
+
+A Tabela~\ref{tab:hiperparametros} resume as melhores configurações encontradas pela busca aleatória. Nota-se que os \textit{ensembles} convergiram para configurações conservadoras (profundidades reduzidas, taxas de aprendizado baixas), coerentes com o volume modesto de dados --- árvores rasas limitam a capacidade do modelo e mitigam o sobreajuste.
+
+\input{tabelas/tab_hiperparametros}
+
+\subsection{Avaliação no Conjunto de Teste Independente}
+
+Após a otimização, cada modelo foi reavaliado no conjunto de teste (2023--2024), não utilizado em nenhuma etapa anterior. A Tabela~\ref{tab:resultados} apresenta o ranqueamento por AUC-ROC, e a Figura~\ref{fig:roc} exibe as curvas ROC correspondentes. O LightGBM alcançou o melhor AUC-ROC (0,877), seguido do \textit{Random Forest} (0,844) e da Regressão Logística (0,828). A Figura~\ref{fig:metricas} compara visualmente as métricas, e a Figura~\ref{fig:matrizes} apresenta as matrizes de confusão dos quatro modelos.
+
+\input{tabelas/tab_resultados_teste}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.75\textwidth]{roc_comparacao_4modelos.png}
+    \caption{Curvas ROC dos quatro modelos no conjunto de teste (2023--2024). A diagonal tracejada representa um classificador aleatório (AUC = 0,50).}
+    \label{fig:roc}
+
+    \small \textit{Fonte: Elaborado pelo autor (\the\year).}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{comparacao_metricas_4modelos.png}
+    \caption{Comparação das métricas de desempenho (Acurácia e AUC-ROC) entre os modelos no conjunto de teste.}
+    \label{fig:metricas}
+
+    \small \textit{Fonte: Elaborado pelo autor (\the\year).}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1.0\textwidth]{matrizes_confusao_4modelos.png}
+    \caption{Matrizes de confusão dos quatro modelos no conjunto de teste (2023--2024).}
+    \label{fig:matrizes}
+
+    \small \textit{Fonte: Elaborado pelo autor (\the\year).}
+\end{figure}
+
+A Tabela~\ref{tab:classificacao} detalha o relatório de classificação da Regressão Logística. Observa-se o padrão típico de classes desbalanceadas: desempenho elevado na classe majoritária (F1 = 0,88) e moderado na classe minoritária (F1 = 0,50), reforçando que o valor do modelo está na \emph{ordenação} dos clubes por risco --- capturada pelo AUC-ROC --- mais do que na classificação binária com limiar fixo.
+
+\input{tabelas/tab_classificacao_logistica}
+
+\subsection{A Armadilha da Acurácia: o Caso do XGBoost}
+
+O resultado mais instrutivo da comparação é o contraste do XGBoost: 82,5\% de acurácia --- igual à do LightGBM --- mas AUC-ROC de apenas 0,652. A inspeção da matriz de confusão (Figura~\ref{fig:matrizes}) revela o mecanismo: o modelo enviesou-se para a classe majoritária, acertando ``por omissão'' ao prever permanência para quase todos os clubes. Como cerca de 80\% dos clubes de fato permanecem, essa estratégia trivial infla a acurácia sem capacidade real de discriminação --- exatamente o fenômeno descrito por \citeonline{he2009} para dados desbalanceados. Esse caso demonstra empiricamente por que a acurácia não deve ser utilizada como métrica única neste tipo de problema e valida a escolha do AUC-ROC como critério principal deste trabalho.
+
+\subsection{Estabilidade \textit{versus} Desempenho: Escolha do Modelo Final}
+
+Os resultados colocam em evidência um \textit{trade-off} clássico. O LightGBM maximiza o AUC-ROC no teste (0,877), mas sua alta variância no \textit{walk-forward} ($\pm$0,151) indica menor consistência entre temporadas. A Regressão Logística, embora terceira no teste (0,828), foi a mais estável na validação temporal ($\pm$0,058) e oferece coeficientes diretamente interpretáveis --- \textit{features} com coeficiente positivo aumentam o risco previsto de rebaixamento, informação diretamente utilizável pela gestão esportiva. Assim, para aplicação prática, a Regressão Logística foi adotada como modelo final de previsão, pela combinação de estabilidade e interpretabilidade; o LightGBM permanece como alternativa quando a maximização do AUC-ROC for o critério prioritário.
+
+\subsection{Previsão para a Temporada 2025}
+
+Aplicando o modelo final, treinado com todo o período 2014--2024, aos 20 clubes participantes da Série A de 2025, obtém-se o ranking de risco da Tabela~\ref{tab:previsao2025}, ilustrado na Figura~\ref{fig:previsao}. Seguindo o formato do campeonato, os quatro clubes de maior probabilidade são classificados na zona de rebaixamento; destaca-se que apenas Juventude, Sport Recife e Vitória superaram o limiar de 50\%, tendo o Mirassol sido incluído pela posição no ranking (4.\textordmasculine{} maior risco).
+
+\input{tabelas/tab_previsao_2025}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{previsao_2025_v2.png}
+    \caption{Ranking de risco de rebaixamento --- Brasileirão Série A 2025. Barras vermelhas indicam os quatro clubes previstos para a zona de rebaixamento.}
+    \label{fig:previsao}
+
+    \small \textit{Fonte: Elaborado pelo autor (\the\year).}
+\end{figure}
+
+As previsões são coerentes com as características que o modelo penaliza: o Juventude acumula baixo aproveitamento nas temporadas recentes; Sport Recife e Vitória são recém-promovidos com elencos de menor valor de mercado; e o Mirassol faz sua estreia histórica na Série A com o menor valor de elenco entre os 20 participantes (\euro 28,4 milhões), dependendo da imputação por mediana nas \textit{features} de histórico --- o que ilustra tanto o funcionamento quanto os limites do modelo para clubes sem passado na elite.
+
+% ============================================================
+% 5. CONSIDERAÇÕES FINAIS
+% ============================================================
+\section{Considerações Finais}
+
+Este trabalho desenvolveu e comparou quatro modelos de \textit{Machine Learning} para previsão de rebaixamento no Campeonato Brasileiro Série A a partir de informações disponíveis antes do início da temporada. Retomando os objetivos específicos: a base histórica 2014--2025 foi construída com dados do Transfermarkt (objetivo i); a engenharia de \textit{features} com janelas deslizantes foi implementada sem vazamento temporal (objetivo ii); os quatro algoritmos foram treinados e otimizados com validação \textit{walk-forward} e \textit{RandomizedSearchCV} (objetivo iii); a comparação em teste independente apontou o LightGBM como melhor discriminador (AUC-ROC de 0,877, significativamente acima do 0,500 esperado de um classificador aleatório) e a Regressão Logística como modelo mais estável e interpretável (objetivo iv); e a previsão para 2025 foi gerada, indicando Juventude, Sport Recife, Vitória e Mirassol como os clubes de maior risco (objetivo v). O objetivo geral foi, portanto, plenamente alcançado.
+
+As contribuições do trabalho são três. Primeira, um \textit{pipeline} metodologicamente rigoroso e integralmente reprodutível para previsão esportiva com dados temporais no contexto brasileiro, disponível em repositório público. Segunda, a demonstração empírica da ``armadilha da acurácia'': o contraste entre a acurácia de 82,5\% e o AUC-ROC de 0,652 do XGBoost oferece um exemplo didático da inadequação da acurácia como métrica única em classes desbalanceadas. Terceira, a evidência de que o histórico recente de desempenho, capturado pelas janelas deslizantes, complementa de forma relevante os indicadores financeiros de elenco na explicação do risco de rebaixamento.
+
+O estudo possui limitações que devem ser reconhecidas. A restrição a dados pré-temporada, embora confira valor prático à previsão, impede que o modelo capture a dinâmica da própria temporada em curso. Fatores sabidamente relevantes --- lesões, trocas de treinador, sobrecarga de calendário e movimentações nas janelas de transferências --- não são modelados. O volume de dados ($\sim$220 observações) é reduzido para os padrões de \textit{Machine Learning}, o que amplia a variância das estimativas, como evidenciado pela oscilação do LightGBM entre \textit{folds} ($\pm$0,151), e limita a complexidade dos modelos treináveis. Por fim, clubes recém-promovidos, sem histórico na Série A, dependem da imputação por mediana, aproximação razoável porém imperfeita de sua realidade competitiva.
+
+Como trabalhos futuros, propõe-se: (i) o retreinamento parcial do modelo ao longo da temporada, incorporando a pontuação acumulada para capturar a forma corrente dos clubes; (ii) a inclusão de \textit{features} do mercado de transferências, dado que reforços e vendas impactam diretamente o desempenho esperado; (iii) a experimentação com modelos sequenciais (LSTM, \textit{Transformers}) à medida que mais temporadas ampliem a base de dados; e (iv) a expansão do escopo para a Série B e para ligas de outros países, aumentando o volume de dados e a testabilidade externa das conclusões.
+
+% ============================================================
+% REFERÊNCIAS
+% ============================================================
+\bibliographystyle{abntex2-alf}
+\bibliography{referencias}
+
+\end{document}

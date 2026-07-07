@@ -86,7 +86,7 @@ def _extensao_2025(df_base: pd.DataFrame, df_desemp: pd.DataFrame) -> pd.DataFra
 
 @st.cache_data
 def _carregar_desempenho() -> pd.DataFrame:
-    caminho = os.path.join("dados", "tabela_desempenho_brasileirao.xlsx")
+    caminho = os.path.join("dados", "brutos", "tabela_desempenho_brasileirao.xlsx")
     df = pd.read_excel(caminho, sheet_name="Todos")
     df.columns = df.columns.str.strip()
     return df.sort_values(['Clube', 'Temporada']).reset_index(drop=True)
@@ -105,7 +105,7 @@ def carregar_desempenho_com_janelas() -> pd.DataFrame:
 
 @st.cache_data
 def carregar_dados() -> pd.DataFrame:
-    caminho = os.path.join("dados", "BASE_FINAL.csv")
+    caminho = os.path.join("dados", "processados", "BASE_FINAL.csv")
     df = pd.read_csv(caminho)
     df.columns = df.columns.str.strip()
     return _criar_status_bin(df)
@@ -114,7 +114,7 @@ def carregar_dados() -> pd.DataFrame:
 @st.cache_data
 def carregar_dados_excel() -> pd.DataFrame:
     """Carrega BASE_FINAL.xlsx e anexa as 12 features de janela deslizante."""
-    caminho = os.path.join("dados", "BASE_FINAL.xlsx")
+    caminho = os.path.join("dados", "processados", "BASE_FINAL.xlsx")
     try:
         df = pd.read_excel(caminho, sheet_name="CLUBES")
     except Exception:

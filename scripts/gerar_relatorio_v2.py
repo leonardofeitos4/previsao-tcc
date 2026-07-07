@@ -260,7 +260,7 @@ bullet(doc, '11 temporadas (2014 a 2024) × 20 clubes por temporada = 220 regist
 bullet(doc, '2025 foi excluída propositalmente — como é o ano que estamos tentando prever, '
        'incluir seus dados seria trapaça (data leakage): o modelo aprenderia o resultado antes de prever.',
        bold_prefix='Por que excluir 2025? ')
-bullet(doc, 'dados/tabela_desempenho_brasileirao.xlsx — arquivo Excel com 12 abas '
+bullet(doc, 'dados/brutos/tabela_desempenho_brasileirao.xlsx — arquivo Excel com 12 abas '
        '(uma por temporada + aba "Todos" com todos os dados juntos)',
        bold_prefix='Arquivo gerado: ')
 
@@ -441,13 +441,13 @@ add_table(doc,
          'C = 0.985, solver = lbfgs | AUC-CV = 0.754'],
         ['Random Forest',
          'n_estimators, max_depth, min_samples_split, max_features',
-         'n_est=100, max_depth=3, min_split=5, max_feat=log2 | AUC-CV = 0.757'],
+         'n_est=100, max_depth=3, min_split=10, max_feat=sqrt | AUC-CV = 0.760'],
         ['XGBoost',
          'n_estimators, max_depth, learning_rate, subsample',
-         'Configuração otimizada automaticamente'],
+         'n_est=50, max_depth=5, learning_rate=0.05, subsample=0.7 | AUC-CV = 0.742'],
         ['LightGBM',
          'n_estimators, max_depth, learning_rate, num_leaves',
-         'Configuração otimizada automaticamente'],
+         'n_est=50, max_depth=7, learning_rate=0.01, num_leaves=31 | AUC-CV = 0.721'],
     ]
 )
 
@@ -530,12 +530,12 @@ para(doc,
 add_table(doc,
     ['Feature', 'Coeficiente', 'Interpretação'],
     [
-        ['Valor de Mercado Total', '−0.91', 'Clube mais rico → menos risco'],
-        ['V_media_3 (vitórias últ. 3 anos)', '−0.73', 'Mais vitórias recentes → menos risco'],
-        ['Plantel', '+0.56', 'Efeito de multicolinearidade com valor de mercado'],
-        ['Gols_Pro_media_5', '−0.52', 'Mais gols marcados nos últ. 5 anos → menos risco'],
-        ['Gols_Contra_media_5', '+0.50', 'Mais gols sofridos → mais risco'],
-        ['Pts_media_3 / Pts_media_5', '+0.47 / +0.47', 'Correlacionados com V_media — distribuição de peso'],
+        ['Valor de Mercado Total', '−0.93', 'Clube mais rico → menos risco'],
+        ['V_media_3 (vitórias últ. 3 anos)', '−0.70', 'Mais vitórias recentes → menos risco'],
+        ['Plantel', '+0.55', 'Efeito de multicolinearidade com valor de mercado'],
+        ['Gols_Contra_media_5', '+0.49', 'Mais gols sofridos → mais risco'],
+        ['Pts_media_3 / Pts_media_5', '+0.42 / +0.37', 'Correlacionados com V_media — distribuição de peso'],
+        ['Gols_Pro_media_5', '−0.40', 'Mais gols marcados nos últ. 5 anos → menos risco'],
     ]
 )
 
@@ -572,13 +572,13 @@ h2(doc, '8.1 Clubes previstos para rebaixamento em 2025')
 add_table(doc,
     ['Posição', 'Clube', 'Prob. Rebaixamento', 'Situação prevista'],
     [
-        ['1º', 'Sport Recife',  '65,4 %', 'REBAIXADO'],
-        ['2º', 'Vitória',       '64,0 %', 'REBAIXADO'],
-        ['3º', 'Juventude',     '54,9 %', 'REBAIXADO'],
-        ['4º', 'Mirassol',      '49,0 %', 'REBAIXADO'],
-        ['5º', 'Ceará',         '36,3 %', 'Permanece (zona de atenção)'],
-        ['6º', 'Fluminense',    '26,0 %', 'Permanece'],
-        ['7º', 'Fortaleza',     '24,6 %', 'Permanece'],
+        ['1º', 'Juventude',     '79,4 %', 'REBAIXADO'],
+        ['2º', 'Sport Recife',  '76,9 %', 'REBAIXADO'],
+        ['3º', 'Vitória',       '76,7 %', 'REBAIXADO'],
+        ['4º', 'Mirassol',      '43,6 %', 'REBAIXADO'],
+        ['5º', 'Ceará',         '35,3 %', 'Permanece (zona de atenção)'],
+        ['6º', 'Bahia',         '33,1 %', 'Permanece'],
+        ['7º', 'Fortaleza',     '27,9 %', 'Permanece'],
     ]
 )
 
@@ -747,8 +747,8 @@ add_table(doc,
         ['notebooks/04_modelo_random_forest.ipynb','Random Forest: walk-forward + tuning + importância features'],
         ['notebooks/06_comparacao_modelos.ipynb',  '4 modelos comparados: walk-forward + curvas ROC + tabela final'],
         ['notebooks/07_previsao_2025.ipynb',       'Previsão final: probabilidades de rebaixamento por clube em 2025'],
-        ['dados/BASE_FINAL.xlsx',                  'Dados de elenco por clube e temporada (2014-2025)'],
-        ['dados/tabela_desempenho_brasileirao.xlsx','Desempenho histórico por clube: V, E, D, Gols, Pts (2014-2024)'],
+        ['dados/processados/BASE_FINAL.xlsx',                  'Dados de elenco por clube e temporada (2014-2025)'],
+        ['dados/brutos/tabela_desempenho_brasileirao.xlsx','Desempenho histórico por clube: V, E, D, Gols, Pts (2014-2024)'],
         ['modelos/logistica.pkl',                  'Modelo de Regressão Logística otimizado e salvo'],
         ['modelos/random_forest.pkl',              'Modelo Random Forest otimizado e salvo'],
         ['modelos/xgboost.pkl',                    'Modelo XGBoost otimizado e salvo'],
@@ -766,6 +766,7 @@ para(doc,
 )
 
 # Salvar
-caminho = 'relatorio_melhorias_tcc.docx'
+caminho = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..',
+                       'resultados', 'relatorios', 'relatorio_melhorias_tcc.docx')
 doc.save(caminho)
 print(f'Salvo: {caminho}')

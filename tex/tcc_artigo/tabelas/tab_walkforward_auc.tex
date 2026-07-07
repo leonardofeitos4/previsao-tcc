@@ -1,0 +1,21 @@
+\begin{table}[htbp]
+    \centering
+    \caption{AUC-ROC por \textit{fold} da validação \textit{walk-forward}.}
+    \label{tab:walkforward}
+    \begin{tabular}{lcccc}
+        \toprule
+        \textbf{\textit{Fold} (ano val.)} & \textbf{Reg. Logística} & \textbf{\textit{Random Forest}} & \textbf{XGBoost} & \textbf{LightGBM} \\
+        \midrule
+        \textit{Fold} 1 --- 2018 & 0,828 & 0,789 & 0,766 & 0,719 \\
+        \textit{Fold} 2 --- 2019 & 0,859 & 0,734 & 0,719 & 0,750 \\
+        \textit{Fold} 3 --- 2020 & 0,703 & 0,758 & 0,531 & 0,438 \\
+        \textit{Fold} 4 --- 2021 & 0,750 & 0,656 & 0,594 & 0,688 \\
+        \textit{Fold} 5 --- 2022 & 0,828 & 0,875 & 0,688 & 0,906 \\
+        \midrule
+        \textbf{Média $\pm$ DP} & \textbf{0,794 $\pm$ 0,058} & 0,762 $\pm$ 0,071 & 0,659 $\pm$ 0,085 & 0,700 $\pm$ 0,151 \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{2pt}
+    {\small Fonte: Elaborado pelo autor (\the\year).}
+\end{table}

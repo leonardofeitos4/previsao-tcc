@@ -1,0 +1,19 @@
+\begin{table}[htbp]
+    \centering
+    \caption{Hiperparâmetros selecionados por \textit{RandomizedSearchCV} (30 candidatos) com \textit{TimeSeriesSplit} (5 \textit{folds}) e AUC-ROC como critério de seleção.}
+    \label{tab:hiperparametros}
+    \small
+    \begin{tabular}{lp{7.4cm}c}
+        \toprule
+        \textbf{Modelo} & \textbf{Melhores Hiperparâmetros (CV)} & \textbf{AUC-ROC CV} \\
+        \midrule
+        Regressão Logística & $C = 0{,}985$; \textit{solver} = lbfgs & 0,754 \\
+        \textit{Random Forest} & \textit{n\_estimators} = 100; \textit{max\_depth} = 3; \textit{min\_samples\_split} = 10; \textit{max\_features} = sqrt & 0,760 \\
+        XGBoost & \textit{n\_estimators} = 50; \textit{max\_depth} = 5; \textit{learning\_rate} = 0,05; \textit{subsample} = 0,7 & 0,742 \\
+        LightGBM & \textit{n\_estimators} = 50; \textit{max\_depth} = 7; \textit{learning\_rate} = 0,01; \textit{num\_leaves} = 31 & 0,721 \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{2pt}
+    {\small Fonte: Elaborado pelo autor (\the\year).}
+\end{table}

@@ -21,7 +21,7 @@ _NUM_COLS = ["Plantel", "Estrangeiros", "Valor de Mercado Total", "Pontos"]
 
 @st.cache_data(show_spinner=False)
 def _load():
-    df = pd.read_excel(os.path.join("dados", "BASE_FINAL.xlsx"), sheet_name="CLUBES")
+    df = pd.read_excel(os.path.join("dados", "processados", "BASE_FINAL.xlsx"), sheet_name="CLUBES")
     df.columns = df.columns.str.strip()
     return df
 

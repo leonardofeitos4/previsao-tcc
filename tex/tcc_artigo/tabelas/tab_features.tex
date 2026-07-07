@@ -1,0 +1,27 @@
+\begin{table}[htbp]
+    \centering
+    \caption{Descrição das 15 \textit{features} utilizadas --- cada observação corresponde a um clube em uma temporada.}
+    \label{tab:features}
+    \small
+    \begin{tabular}{llp{6.2cm}}
+        \toprule
+        \textbf{Grupo} & \textbf{\textit{Feature}} & \textbf{Descrição} \\
+        \midrule
+        \multirow{3}{*}{\shortstack[l]{Elenco\\(3 \textit{features})}}
+            & Plantel & Número total de jogadores no elenco registrado \\
+            & Estrangeiros & Número de jogadores estrangeiros no elenco \\
+            & Valor de Mercado Total (M\euro) & Valor financeiro agregado do elenco \\
+        \midrule
+        \multirow{6}{*}{\shortstack[l]{Janelas deslizantes\\(12 \textit{features}:\\médias das 3 e 5\\temporadas anteriores)}}
+            & Pts\_media\_\{3,5\} & Média de pontos conquistados \\
+            & SG\_media\_\{3,5\} & Saldo de gols médio \\
+            & Gols\_Pro\_media\_\{3,5\} & Média de gols marcados \\
+            & Gols\_Contra\_media\_\{3,5\} & Média de gols sofridos \\
+            & V\_media\_\{3,5\} & Média de vitórias \\
+            & Aproveitamento\_media\_\{3,5\} & Percentual médio de pontos aproveitados \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{2pt}
+    {\small Fonte: Elaborado pelo autor (\the\year).}
+\end{table}
