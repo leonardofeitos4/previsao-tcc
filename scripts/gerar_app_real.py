@@ -15,7 +15,8 @@ import numpy as np
 import pandas as pd
 import joblib
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT_DIR)
 
 from sklearn.metrics import (
     confusion_matrix, roc_curve, auc as sk_auc,
@@ -362,7 +363,7 @@ window.fmtNum = function(n, d) {{
 """
 
     # ── Ler arquivos JSX ────────────────────────────────────────────────────
-    jsxdir = os.path.join(os.path.dirname(__file__), "prototipo", "app")
+    jsxdir = os.path.join(ROOT_DIR, "prototipo", "app")
     def read_jsx(name):
         with open(os.path.join(jsxdir, name), encoding="utf-8") as f:
             return f.read()
@@ -621,7 +622,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 </body>
 </html>"""
 
-    out_path = os.path.join(os.path.dirname(__file__), "previsao_rebaixamento.html")
+    out_path = os.path.join(ROOT_DIR, "previsao_rebaixamento.html")
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(html)
 
