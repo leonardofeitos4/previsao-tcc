@@ -1,0 +1,146 @@
+\providecommand{\abntreprintinfo}[1]{%
+ \citeonline{#1}}
+\setlength{\labelsep}{0pt}\begin{thebibliography}{}
+\providecommand{\abntrefinfo}[3]{}
+\providecommand{\abntbstabout}[1]{}
+\abntbstabout{v-1.9.7 }
+
+\bibitem[Arabzad et al. 2014]{arabzad2014}
+\abntrefinfo{Arabzad et al.}{ARABZAD et al.}{2014}
+{ARABZAD, S.~M. et al. Football match results prediction using artificial
+  neural networks: The case of {Iran Pro League}.
+\emph{Journal of Applied Research on Industrial Engineering}, v.~1, n.~3, p.
+  159--179, 2014.}
+
+\bibitem[Baboota e Kaur 2019]{baboota2019}
+\abntrefinfo{Baboota e Kaur}{BABOOTA; KAUR}{2019}
+{BABOOTA, R.; KAUR, H. Predictive analysis and modelling football results using
+  machine learning approach for {English Premier League}.
+\emph{International Journal of Forecasting}, v.~35, n.~2, p. 741--755, 2019.}
+
+\bibitem[Bergmeir e Ben{\'i}tez 2012]{bergmeir2012}
+\abntrefinfo{Bergmeir e Ben{\'i}tez}{BERGMEIR; BEN{\'I}TEZ}{2012}
+{BERGMEIR, C.; BEN{\'I}TEZ, J.~M. On the use of cross-validation for time
+  series predictor evaluation.
+\emph{Information Sciences}, v.~191, p. 192--213, 2012.}
+
+\bibitem[Bergstra e Bengio 2012]{bergstra2012}
+\abntrefinfo{Bergstra e Bengio}{BERGSTRA; BENGIO}{2012}
+{BERGSTRA, J.; BENGIO, Y. Random search for hyper-parameter optimization.
+\emph{Journal of Machine Learning Research}, v.~13, p. 281--305, 2012.}
+
+\bibitem[Breiman 2001]{breiman2001}
+\abntrefinfo{Breiman}{BREIMAN}{2001}
+{BREIMAN, L. Random forests.
+\emph{Machine Learning}, v.~45, n.~1, p. 5--32, 2001.}
+
+\bibitem[Bunker e Thabtah 2019]{bunker2019}
+\abntrefinfo{Bunker e Thabtah}{BUNKER; THABTAH}{2019}
+{BUNKER, R.~P.; THABTAH, F. A machine learning framework for sport result
+  prediction.
+\emph{Applied Computing and Informatics}, v.~15, n.~1, p. 27--33, 2019.}
+
+\bibitem[Carpita, Ciavolino e Pasca 2019]{carpita2019}
+\abntrefinfo{Carpita, Ciavolino e Pasca}{CARPITA; CIAVOLINO; PASCA}{2019}
+{CARPITA, M.; CIAVOLINO, E.; PASCA, P. Exploring and modelling team
+  performances of the {Kaggle European Soccer} database.
+\emph{Statistical Modelling}, v.~19, n.~1, p. 74--101, 2019.}
+
+\bibitem[Chen e Guestrin 2016]{chen2016}
+\abntrefinfo{Chen e Guestrin}{CHEN; GUESTRIN}{2016}
+{CHEN, T.; GUESTRIN, C. {XGBoost}: A scalable tree boosting system. In:
+  \emph{Proceedings of the 22nd ACM SIGKDD International Conference on
+  Knowledge Discovery and Data Mining}. San Francisco: [s.n.], 2016. p.
+  785--794.}
+
+\bibitem[Constantinou, Fenton e Neil 2012]{constantinou2012}
+\abntrefinfo{Constantinou, Fenton e Neil}{CONSTANTINOU; FENTON; NEIL}{2012}
+{CONSTANTINOU, A.~C.; FENTON, N.~E.; NEIL, M. pi-football: A {Bayesian} network
+  model for forecasting association football match outcomes.
+\emph{Knowledge-Based Systems}, v.~36, p. 322--339, 2012.}
+
+\bibitem[Cox 1958]{cox1958}
+\abntrefinfo{Cox}{COX}{1958}
+{COX, D.~R. The regression analysis of binary sequences.
+\emph{Journal of the Royal Statistical Society: Series B (Methodological)},
+  v.~20, n.~2, p. 215--242, 1958.}
+
+\bibitem[Fawcett 2006]{fawcett2006}
+\abntrefinfo{Fawcett}{FAWCETT}{2006}
+{FAWCETT, T. An introduction to {ROC} analysis.
+\emph{Pattern Recognition Letters}, v.~27, n.~8, p. 861--874, 2006.}
+
+\bibitem[G{\'e}ron 2022]{geron2022}
+\abntrefinfo{G{\'e}ron}{G{\'E}RON}{2022}
+{G{\'E}RON, A. \emph{Hands-On Machine Learning with Scikit-Learn, Keras, and
+  TensorFlow}. 3. ed. Sebastopol: O'Reilly Media, 2022.}
+
+\bibitem[Gil 2019]{gil2019}
+\abntrefinfo{Gil}{GIL}{2019}
+{GIL, A.~C. \emph{Como Elaborar Projetos de Pesquisa}. 6. ed. S{\~a}o Paulo:
+  Atlas, 2019.}
+
+\bibitem[Hastie, Tibshirani e Friedman 2009]{hastie2009}
+\abntrefinfo{Hastie, Tibshirani e Friedman}{HASTIE; TIBSHIRANI; FRIEDMAN}{2009}
+{HASTIE, T.; TIBSHIRANI, R.; FRIEDMAN, J. \emph{The Elements of Statistical
+  Learning: Data Mining, Inference, and Prediction}. 2. ed. New York: Springer,
+  2009.}
+
+\bibitem[He e Garcia 2009]{he2009}
+\abntrefinfo{He e Garcia}{HE; GARCIA}{2009}
+{HE, H.; GARCIA, E.~A. Learning from imbalanced data.
+\emph{IEEE Transactions on Knowledge and Data Engineering}, v.~21, n.~9, p.
+  1263--1284, 2009.}
+
+\bibitem[Hub{\'a}{\v{c}}ek, {\v{S}}ourek e {\v{Z}}elezn{\'y} 2019]{hubacek2019}
+\abntrefinfo{Hub{\'a}{\v{c}}ek, {\v{S}}ourek e
+  {\v{Z}}elezn{\'y}}{HUB{\'A}{\v{C}}EK; {\v{S}}OUREK; {\v{Z}}ELEZN{\'Y}}{2019}
+{HUB{\'A}{\v{C}}EK, O.; {\v{S}}OUREK, G.; {\v{Z}}ELEZN{\'Y}, F. Learning to
+  predict soccer results from relational data with gradient boosted trees.
+\emph{Machine Learning}, v.~108, n.~1, p. 29--47, 2019.}
+
+\bibitem[James et al. 2023]{james2023}
+\abntrefinfo{James et al.}{JAMES et al.}{2023}
+{JAMES, G. et al. \emph{An Introduction to Statistical Learning: with
+  Applications in Python}. New York: Springer, 2023.}
+
+\bibitem[Ke et al. 2017]{ke2017}
+\abntrefinfo{Ke et al.}{KE et al.}{2017}
+{KE, G. et al. {LightGBM}: A highly efficient gradient boosting decision tree.
+  In:  \emph{Advances in Neural Information Processing Systems 30 (NIPS 2017)}.
+  Long Beach: [s.n.], 2017. p. 3146--3154.}
+
+\bibitem[Maciel 2024]{maciel2024}
+\abntrefinfo{Maciel}{MACIEL}{2024}
+{MACIEL, V.~B. \emph{Predição de resultados de partidas do {Campeonato
+  Brasileiro} de futebol}. 2024. Trabalho de Conclusão de Curso (Bacharelado
+  em Ciência da Computação) --- Universidade Federal do Rio Grande do Sul,
+  Porto Alegre.
+Disponível em: \url{https://lume.ufrgs.br/handle/10183/273233}. Acesso em: 14
+  jul. 2026.}
+
+\bibitem[M{\"u}ller, Simons e Weinmann 2017]{muller2017}
+\abntrefinfo{M{\"u}ller, Simons e Weinmann}{M{\"U}LLER; SIMONS; WEINMANN}{2017}
+{M{\"U}LLER, O.; SIMONS, A.; WEINMANN, M. Beyond crowd judgments: Data-driven
+  estimation of market value in association football.
+\emph{European Journal of Operational Research}, v.~263, n.~2, p. 611--624,
+  2017.}
+
+\bibitem[Pedregosa et al. 2011]{pedregosa2011}
+\abntrefinfo{Pedregosa et al.}{PEDREGOSA et al.}{2011}
+{PEDREGOSA, F. et al. Scikit-learn: Machine learning in {Python}.
+\emph{Journal of Machine Learning Research}, v.~12, p. 2825--2830, 2011.}
+
+\bibitem[Tashman 2000]{tashman2000}
+\abntrefinfo{Tashman}{TASHMAN}{2000}
+{TASHMAN, L.~J. Out-of-sample tests of forecasting accuracy: An analysis and
+  review.
+\emph{International Journal of Forecasting}, v.~16, n.~4, p. 437--450, 2000.}
+
+\bibitem[{Transfermarkt} 2025]{transfermarkt2025}
+\abntrefinfo{{Transfermarkt}}{{Transfermarkt}}{2025}
+{{Transfermarkt}. \emph{Mercado de transfer{\^e}ncias, rumores, valores de
+  mercado e not{\'i}cias}. 2025. \url{https://www.transfermarkt.com.br}.
+Acesso em: abr. 2025.}
+
+\end{thebibliography}

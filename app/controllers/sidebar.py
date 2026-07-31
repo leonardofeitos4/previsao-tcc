@@ -46,7 +46,7 @@ def sidebar_content() -> None:
   <div class="mm-row"><span>Teste</span><b>2023 – 2024</b></div>
   <div class="mm-row"><span>Acurácia (teste)</span><b>80,0 %</b></div>
   <div class="mm-row"><span>AUC-ROC (teste)</span><b>0,828</b></div>
-  <div class="mm-row"><span>AUC-ROC (CV)</span><b>0,754 ± 0,058</b></div>
+  <div class="mm-row"><span>AUC-ROC (walk-forward)</span><b>0,794 ± 0,058</b></div>
   <div class="mm-row"><span>Validação</span><b>Walk-forward (5 folds)</b></div>
   <div class="mm-row"><span>Modelos testados</span><b>LR · RF · XGB · LGB</b></div>
   <div class="mm-feat">

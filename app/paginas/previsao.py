@@ -16,6 +16,24 @@ _TEMPLATE  = "plotly_dark"
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
+@st.cache_data(show_spinner=False)
+def _perfis_referencia() -> dict:
+    """Perfis de elenco de referência, medianos, calculados da base de treino."""
+    df = carregar_dados_excel()
+    tr = df[df["Temporada"] <= 2022]
+    cols = ["Plantel", "Estrangeiros", "Valor de Mercado Total"]
+
+    top4 = (tr.sort_values(["Temporada", "Pontos"], ascending=[True, False])
+              .groupby("Temporada").head(4)) if "Pontos" in tr.columns else tr.head(0)
+
+    perfis = {"Média da Série A": tr[cols].median()}
+    if "Status_bin" in tr.columns and tr["Status_bin"].sum() > 0:
+        perfis["Rebaixado típico"] = tr[tr["Status_bin"] == 1][cols].median()
+    if len(top4) > 0:
+        perfis["Top-4 típico"] = top4[cols].median()
+    return {k: v.to_dict() for k, v in perfis.items()}
+
+
 def _cor_e_classe(prob_reb: float):
     if prob_reb >= 0.6:
         return "result-danger", "🚨", "Alto risco de rebaixamento"
@@ -100,18 +118,25 @@ def main():
         with col_form:
             st.markdown('<p class="section-title">Dados do Clube</p>', unsafe_allow_html=True)
             with st.form("form_simulador"):
+                # Faixas e defaults tirados da própria base (treino 2014–2022).
+                # Antes o slider de plantel ia de 15 a 50 com default 25, faixa
+                # inteiramente abaixo do mínimo real (41) — isso jogava toda
+                # simulação ~3,8 desvios abaixo da média, subestimava o risco
+                # (nunca chegava a 50%) e invertia a leitura do efeito do elenco.
                 nome = st.text_input("Nome do clube", value="Meu Time")
                 plantel = st.slider(
-                    "Tamanho do elenco", 15, 50, 25,
-                    help="Média histórica na Série A: ~28 atletas",
+                    "Tamanho do elenco", 40, 82, 56,
+                    help="Plantel registrado no Transfermarkt. Média histórica na "
+                         "Série A: ~56 atletas (mín. 41, máx. 80).",
                 )
                 estrangeiros = st.slider(
-                    "Nº de estrangeiros", 0, 15, 3,
-                    help="Média histórica na Série A: ~4 atletas",
+                    "Nº de estrangeiros", 0, 17, 6,
+                    help="Atletas não-brasileiros. Média histórica: ~6.",
                 )
                 valor = st.slider(
-                    "Valor de mercado total (M€)", 5.0, 300.0, 50.0, step=5.0,
-                    help="Média histórica na Série A: ~85 M€",
+                    "Valor de mercado total (M€)", 5.0, 285.0, 48.0, step=1.0,
+                    help="Média no período de treino (2014–2022): ~48 M€. "
+                         "Em 2025 os valores são bem maiores (média ~111 M€).",
                 )
                 analisar = st.form_submit_button("Analisar Risco", use_container_width=True)
 
@@ -146,19 +171,42 @@ def main():
                 m2.metric("Estrangeiros", f"{estrangeiros}")
                 m3.metric("Valor de Mercado", f"{valor:.0f} M€")
 
-                # Tabela comparativa
+                # Tabela comparativa — perfis e probabilidades CALCULADOS da base,
+                # não valores fixos. Antes esta tabela afirmava "~70 %" para o
+                # rebaixado típico, número que o próprio simulador não reproduzia.
                 st.markdown('<p class="section-title">Comparação com Referências</p>',
                             unsafe_allow_html=True)
-                comp = pd.DataFrame({
-                    "Clube": [nome, "Média Série A", "Rebaixado Típico", "Top-4 Típico"],
-                    "Plantel": [plantel, 28, 24, 32],
-                    "Estrangeiros": [estrangeiros, 4, 2, 7],
-                    "Valor de Mercado (M€)": [valor, 85, 30, 150],
-                    "Prob. Rebaixamento": [
-                        f"{prob_reb:.1%}", "—", "~70 %", "~5 %"
-                    ],
-                })
-                st.dataframe(comp, hide_index=True, use_container_width=True)
+                perfis = _perfis_referencia()
+                linhas = [{
+                    "Perfil": nome,
+                    "Plantel": plantel,
+                    "Estrangeiros": estrangeiros,
+                    "Valor de Mercado (M€)": round(valor, 1),
+                    "Prob. Rebaixamento": f"{prob_reb:.1%}",
+                }]
+                for rot, perfil in perfis.items():
+                    entrada_p = pd.DataFrame({
+                        "Plantel": [perfil["Plantel"]],
+                        "Estrangeiros": [perfil["Estrangeiros"]],
+                        "Valor de Mercado Total": [perfil["Valor de Mercado Total"]],
+                    })
+                    _, pr = fazer_previsao(entrada_p)
+                    linhas.append({
+                        "Perfil": rot,
+                        "Plantel": round(perfil["Plantel"]),
+                        "Estrangeiros": round(perfil["Estrangeiros"]),
+                        "Valor de Mercado (M€)": round(perfil["Valor de Mercado Total"], 1),
+                        "Prob. Rebaixamento": f"{pr[0][1]:.1%}",
+                    })
+                st.dataframe(pd.DataFrame(linhas), hide_index=True,
+                             use_container_width=True)
+                st.caption(
+                    "Perfis calculados a partir das medianas da base de treino "
+                    "(2014–2022). **Atenção:** o simulador recebe apenas os 3 dados "
+                    "de elenco — as 12 variáveis de histórico ficam fixas na mediana "
+                    "da liga. Por isso as probabilidades aqui são mais comedidas que "
+                    "as do **Ranking 2025**, que usa o histórico real de cada clube."
+                )
 
     # ── TAB 2: Ranking 2025 ───────────────────────────────────────────────────
     with tab_rank:

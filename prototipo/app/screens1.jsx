@@ -42,10 +42,13 @@ function SliderField({ label, icon, value, min, max, step = 1, onChange, fmt = (
 function ScreenPrevisao() {
   const M = window.MODEL;
   const [nome, setNome] = useState("Meu Clube");
-  // elenco
-  const [plantel, setPlantel] = useState(28);
-  const [estr, setEstr]       = useState(4);
-  const [vm, setVm]           = useState(85);
+  // elenco — defaults vindos das médias reais do período de treino (SENS_BASE),
+  // não de valores chutados: o plantel médio na base é ~56, não 28.
+  const _B = window.SENS_BASE || { plantel: 56, estr: 6, vm: 48 };
+  const _F = window.SENS_FAIXAS || { plantel: [41, 82], estr: [0, 17], vm: [5, 285] };
+  const [plantel, setPlantel] = useState(_B.plantel);
+  const [estr, setEstr]       = useState(_B.estr);
+  const [vm, setVm]           = useState(_B.vm);
   // desempenho (médias históricas da liga como default)
   const [pts, setPts]         = useState(50);
   const [gPro, setGPro]       = useState(38);
@@ -60,7 +63,8 @@ function ScreenPrevisao() {
   const band = window.riskBand(p);
 
   const aprPct = Math.round(apr * 100);
-  const med = { vm: 85, plantel: 28, estr: 4, pts: 50, sg: 3, gPro: 38, gContra: 35, vit: 14, apr: 44 };
+  const med = { vm: _B.vm, plantel: _B.plantel, estr: _B.estr,
+                pts: 50, sg: 3, gPro: 38, gContra: 35, vit: 14, apr: 44 };
   const fatores = [
     { l: "Valor de mercado",      v: vm,      ref: med.vm,      good: vm >= med.vm,          icon: "wallet",  txt: vm >= med.vm ? "acima da média" : "abaixo da média" },
     { l: "Pontos médios",         v: pts,     ref: med.pts,     good: pts >= med.pts,         icon: "activity",txt: pts >= med.pts ? "desempenho acima da média" : "desempenho abaixo da média" },
@@ -81,6 +85,12 @@ function ScreenPrevisao() {
       </Callout>
 
       <SectionTitle kicker="Ferramenta">Simulador individual de risco</SectionTitle>
+      <Callout tone="muted" icon="info">
+        <b>Versão reduzida para exploração.</b> Aqui você informa 9 indicadores e as
+        janelas de 3 e 5 temporadas recebem o mesmo valor. O <b>Ranking 2025</b> usa o
+        modelo completo, com as 15 features e o histórico real de cada clube — por isso
+        os números das duas telas não são idênticos.
+      </Callout>
 
       <div className="sim-grid">
         {/* coluna esquerda — inputs */}
@@ -96,15 +106,15 @@ function ScreenPrevisao() {
           <Card>
             <div className="card-title"><Icon name="wallet" size={16} /> Dados do elenco</div>
             <SliderField label="Tamanho do elenco" icon="users" value={plantel}
-              min={15} max={55} onChange={setPlantel} unit=" atletas"
-              hint="Média histórica na Série A: ~28 atletas." />
+              min={_F.plantel[0]} max={_F.plantel[1]} onChange={setPlantel} unit=" atletas"
+              hint={`Plantel registrado no Transfermarkt. Média histórica na Série A: ~${_B.plantel} atletas.`} />
             <SliderField label="Nº de estrangeiros" icon="globe" value={estr}
-              min={0} max={15} onChange={setEstr}
-              hint="Atletas não-brasileiros. Média histórica: ~4." />
+              min={_F.estr[0]} max={_F.estr[1]} onChange={setEstr}
+              hint={`Atletas não-brasileiros. Média histórica: ~${_B.estr}.`} />
             <SliderField label="Valor de mercado total" icon="wallet" value={vm}
-              min={5} max={300} step={1} onChange={setVm} unit=" M€"
+              min={_F.vm[0]} max={_F.vm[1]} step={1} onChange={setVm} unit=" M€"
               fmt={(v) => window.fmtNum(v, 0)}
-              hint="Soma do valor de mercado do elenco (Transfermarkt). Média: ~85 M€." />
+              hint={`Soma do valor de mercado do elenco (Transfermarkt). Média no treino: ~${_B.vm} M€; em 2025 os valores são bem maiores.`} />
           </Card>
 
           <Card>

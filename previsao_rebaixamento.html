@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Previsão de Rebaixamento — Brasileirão Série A 2025</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c0f12;--surface:#141a1f;--surface-2:#1a212a;--surface-3:#232d38;
+  --border:rgba(255,255,255,.08);--border-2:rgba(255,255,255,.14);
+  --text:#eef2f5;--muted:#8b98a4;--faint:#5e6b77;
+  --green:#33c46a;--lime:#a8d94b;--blue:#4f9cf5;--violet:#9b7cf0;
+  --red:#f0524b;--amber:#e3a93b;
+  --grid:rgba(255,255,255,.06);--bar-dim:rgba(120,185,150,.32);
+  --serif:'Source Serif 4',Georgia,serif;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --shadow:0 1px 0 rgba(255,255,255,.03) inset,0 12px 32px -16px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;background-image:radial-gradient(1200px 600px at 80% -10%,rgba(51,196,106,.05),transparent 60%);}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+em{font-style:normal;color:var(--faint);font-size:.82em;font-family:var(--mono)}
+.app{display:block;min-height:100vh}
+.main{min-width:0;padding:40px 52px 80px;max-width:1180px;margin-left:278px;transition:margin-left .25s}
+.app-wide .main{margin-left:0}
+@media(max-width:1100px){.main{padding:28px 26px 60px}}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:22px 18px;display:flex;flex-direction:column;gap:18px;position:fixed;top:0;left:0;width:278px;height:100vh;overflow-y:auto;z-index:20;transition:transform .25s}
+.sb-closed{transform:translateX(-278px)}
+.sb-brand{display:flex;align-items:center;gap:11px}
+.sb-logo{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(150deg,#1f7a44,#0f3d23);color:#bff5cf;flex:none;box-shadow:0 0 0 1px rgba(51,196,106,.3),0 6px 14px -6px rgba(51,196,106,.5)}
+.sb-title{font-family:var(--serif);font-weight:700;font-size:17px;letter-spacing:-.01em}
+.sb-sub{font-size:11.5px;color:var(--muted)}
+.sb-close{margin-left:auto;background:none;border:none;color:var(--faint);cursor:pointer;padding:4px;border-radius:8px}
+.sb-close:hover{background:var(--surface-2);color:var(--text)}
+.sb-open{position:fixed;top:16px;left:16px;z-index:30;background:var(--surface-2);border:1px solid var(--border);color:var(--text);width:40px;height:40px;border-radius:10px;cursor:pointer;display:grid;place-items:center}
+.sb-navlabel{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);margin:2px 0 8px 4px;font-weight:600}
+.sb-nav{display:flex;flex-direction:column;gap:2px}
+.nav-item{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;color:var(--muted);font-family:var(--sans);font-size:14px;padding:9px 11px;border-radius:10px;cursor:pointer;position:relative;transition:.15s}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:transparent;flex:none}
+.nav-label{flex:1}
+.nav-new{font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#0c0f12;background:var(--lime);padding:2px 6px;border-radius:5px}
+.nav-on{background:linear-gradient(90deg,rgba(51,196,106,.14),rgba(51,196,106,.03));color:var(--text);font-weight:600}
+.nav-on .nav-dot{background:var(--green);box-shadow:0 0 8px var(--green)}
+.model-mini{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-top:auto}
+.mm-title{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:600;margin-bottom:10px}
+.mm-row{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--border);color:var(--muted)}
+.mm-row:last-of-type{border-bottom:none}
+.mm-row b{color:var(--text);font-weight:600;font-family:var(--mono);font-size:11.5px;text-align:right}
+.mm-feat{margin-top:10px;border-top:1px dashed var(--border);padding-top:10px}
+.mm-feat-h{font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-bottom:8px;font-weight:600}
+.mm-feat-tags{display:flex;flex-wrap:wrap;gap:5px}
+.mm-feat-tags span{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;background:var(--surface-3);color:var(--muted);padding:3px 7px;border-radius:6px}
+.sb-foot{font-size:10.5px;color:var(--faint);line-height:1.5;padding:0 4px}
+.hero{position:relative;overflow:hidden;border-radius:18px;padding:30px 32px;margin-bottom:24px;background:linear-gradient(120deg,#0f3826 0%,#123e57 55%,#0d2540 100%);border:1px solid rgba(255,255,255,.07)}
+.hero-compact{padding:22px 28px}
+.hero-lines{position:absolute;inset:0;opacity:.5;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0 78px,rgba(255,255,255,.04) 78px 79px),radial-gradient(420px 220px at 88% 120%,rgba(51,196,106,.22),transparent 70%)}
+.hero-body{position:relative}
+.hero-tag{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:#bdebcf;background:rgba(0,0,0,.22);padding:5px 11px;border-radius:20px;border:1px solid rgba(255,255,255,.1);font-weight:600;margin-bottom:14px}
+.hero h1{font-family:var(--serif);font-weight:700;font-size:30px;line-height:1.12;margin:0 0 8px;letter-spacing:-.015em}
+.hero-compact h1{font-size:24px}
+.hero-em{color:#9fd9ff;font-weight:600}
+.hero p{margin:0;color:#c5d6dd;font-size:13.5px}
+.sec-title{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin:30px 0 16px}
+.sec-kicker{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--green);font-weight:600;margin-bottom:5px}
+.sec-title h2{font-family:var(--serif);font-weight:600;font-size:21px;margin:0;letter-spacing:-.01em}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow)}
+.card-pad{padding:20px 22px}
+.card-title{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13.5px;color:var(--muted);margin-bottom:16px;letter-spacing:.01em}
+.card-title>svg{color:var(--green)}
+.callout{display:flex;gap:12px;padding:14px 18px;border-radius:13px;font-size:13.5px;line-height:1.55;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--blue);margin:14px 0;color:var(--muted)}
+.callout b,.callout strong{color:var(--text);font-weight:600}
+.callout-ic{flex:none;margin-top:2px;color:var(--blue)}
+.callout-info{border-left-color:var(--blue)}.callout-info .callout-ic{color:var(--blue)}
+.callout-warn{border-left-color:var(--amber);background:linear-gradient(90deg,rgba(227,169,59,.07),transparent)}.callout-warn .callout-ic{color:var(--amber)}
+.callout-muted{border-left-color:var(--faint)}.callout-muted .callout-ic{color:var(--faint)}
+.metric-row,.rank-kpis,.hist-kpis,.sens-kpis,.desc-kpis{display:grid;gap:14px;margin:6px 0 4px}
+.rank-kpis,.hist-kpis,.desc-kpis{grid-template-columns:repeat(4,1fr)}
+.sens-kpis{grid-template-columns:repeat(3,1fr)}
+.metric-row{grid-template-columns:repeat(6,1fr)}
+@media(max-width:1000px){.metric-row{grid-template-columns:repeat(3,1fr)}.rank-kpis,.hist-kpis,.desc-kpis{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:15px 16px}
+.stat-label{font-size:11.5px;color:var(--muted);margin-bottom:7px;font-weight:500}
+.stat-value{font-family:var(--serif);font-weight:700;font-size:26px;letter-spacing:-.02em;line-height:1}
+.stat-unit{font-size:13px;color:var(--muted);font-weight:500;margin-left:3px;font-family:var(--sans)}
+.stat-sub{font-size:11px;color:var(--faint);margin-top:6px}
+.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:5px;margin:20px 0 16px;flex-wrap:wrap}
+.tab{display:inline-flex;align-items:center;gap:7px;border:none;background:none;cursor:pointer;color:var(--muted);font-family:var(--sans);font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px;transition:.15s}
+.tab:hover{color:var(--text)}
+.tab-on{background:var(--surface-3);color:var(--text);font-weight:600;box-shadow:0 0 0 1px var(--border)}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;line-height:1.3}
+.badge-neutral{background:var(--surface-3);color:var(--muted)}
+.badge-ok{background:rgba(51,196,106,.16);color:var(--green)}
+.badge-danger{background:rgba(240,82,75,.16);color:var(--red)}
+.badge-warn{background:rgba(227,169,59,.16);color:var(--amber)}
+.crest{display:inline-grid;place-items:center;border-radius:50%;color:#fff;font-weight:700;font-family:var(--mono);flex:none;box-shadow:0 0 0 1px rgba(255,255,255,.18),0 2px 6px rgba(0,0,0,.4);letter-spacing:-.02em}
+.probbar{position:relative;width:100%;background:var(--surface-3);border-radius:20px;overflow:hidden}
+.probbar-zone{position:absolute;right:0;top:0;bottom:0;width:50%;background:repeating-linear-gradient(45deg,rgba(240,82,75,.06) 0 6px,transparent 6px 12px)}
+.probbar-fill{position:absolute;left:0;top:0;bottom:0;border-radius:20px;transition:width .4s}
+.field{margin-bottom:18px}
+.field-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+.field-head label{font-size:13px;font-weight:500;color:var(--text);display:inline-flex;align-items:center;gap:7px}
+.field-val{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--green)}
+.text-input{width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;color:var(--text);font-family:var(--sans);font-size:14px}
+.text-input:focus{outline:none;border-color:var(--green)}
+input[type=range]{-webkit-appearance:none;width:100%;height:6px;border-radius:6px;background:linear-gradient(90deg,var(--green) var(--pct),var(--surface-3) var(--pct));cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid var(--green);box-shadow:0 2px 6px rgba(0,0,0,.4);cursor:pointer}
+.field-scale{display:flex;justify-content:space-between;font-size:11px;color:var(--faint);margin-top:7px;font-family:var(--mono)}
+.field-hint{font-size:11.5px;color:var(--faint);margin-top:6px}
+.sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:900px){.sim-grid{grid-template-columns:1fr}}
+.result-card{background:linear-gradient(180deg,var(--surface),var(--surface-2))}
+.result-gauge{display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px 0 14px}
+.gauge-val{font-family:var(--serif);font-weight:700;font-size:30px}
+.gauge-lbl{font-size:11px;fill:var(--muted);font-family:var(--sans)}
+.result-club{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:14px}
+.result-verdict{display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center;padding:14px;border:1px solid var(--border);border-left-width:3px;border-radius:12px;background:var(--surface);font-size:13px;color:var(--muted)}
+.result-verdict b{color:var(--text)}
+.result-factors{margin-top:16px;display:flex;flex-direction:column;gap:9px}
+.rf{display:flex;align-items:center;gap:10px;font-size:13px}
+.rf-l{flex:1;color:var(--muted)}
+.rf-tag{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600}
+.rank-card{overflow:hidden}
+.rank-head,.rank-row{display:grid;grid-template-columns:44px minmax(150px,2.7fr) minmax(110px,3fr) 66px 72px;align-items:center;gap:12px;padding:11px 18px}
+.rank-head{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);font-weight:600;border-bottom:1px solid var(--border)}
+.rank-row{border-bottom:1px solid var(--border);cursor:pointer;transition:.12s}
+.rank-row:hover{background:var(--surface-2)}
+.rank-zone{background:linear-gradient(90deg,rgba(240,82,75,.08),transparent 70%)}
+.rank-zone:hover{background:linear-gradient(90deg,rgba(240,82,75,.13),transparent 70%)}
+.rank-sel{box-shadow:inset 3px 0 0 var(--green)}
+.rk-pos{display:flex;justify-content:center}
+.rk-num{font-family:var(--serif);font-weight:700;font-size:18px;color:var(--muted)}
+.rk-club{display:flex;align-items:center;gap:10px;min-width:0}
+.rk-name{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rk-uf{font-size:10.5px;color:var(--faint);font-family:var(--mono);margin-left:auto;padding-left:6px;flex:none}
+.rk-pct{font-family:var(--mono);font-weight:600;font-size:14px;text-align:right}
+.rk-vm{font-family:var(--mono);font-size:13px;color:var(--muted);text-align:right}
+.rank-corte{display:flex;align-items:center;gap:7px;justify-content:center;font-size:11.5px;color:var(--faint);padding:11px;background:var(--surface-2);border-top:1px dashed rgba(240,82,75,.3)}
+.chart-trio{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:6px}
+@media(max-width:980px){.chart-trio{grid-template-columns:1fr}}
+.mini-note{font-size:11.5px;color:var(--faint);margin-top:10px;line-height:1.5}
+.confusion{display:grid;grid-template-columns:auto 1fr 1fr;grid-template-rows:auto 1fr 1fr;gap:6px}
+.cf-corner{}.cf-coltop{font-size:10.5px;color:var(--muted);text-align:center;padding-bottom:2px;font-weight:600}
+.cf-rowside{font-size:10.5px;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;font-weight:600;align-self:center}
+.cf-cell{border-radius:11px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:78px}
+.cf-good{background:rgba(51,196,106,.18);border:1px solid rgba(51,196,106,.3)}
+.cf-bad{background:rgba(240,82,75,.18);border:1px solid rgba(240,82,75,.3)}
+.cf-num{font-family:var(--serif);font-weight:700;font-size:28px}
+.cf-lbl{font-size:10px;color:var(--muted);text-align:center}
+.roc,.linechart,.vbars{width:100%;height:auto;display:block}
+.ax{font-size:10px;fill:var(--faint);font-family:var(--mono)}
+.ax-val{font-size:10px;fill:var(--muted);font-family:var(--mono);font-weight:600}
+.ax-cat{font-size:10px;fill:var(--muted);font-family:var(--sans)}
+.ax-title{font-size:10.5px;fill:var(--muted);font-family:var(--sans)}
+.roc-auc{font-size:13px;fill:var(--green);font-weight:700;font-family:var(--mono)}
+.comp-table{width:100%}
+.comp-head,.comp-row{display:grid;grid-template-columns:1.9fr 1fr .9fr .7fr .6fr 2fr;gap:12px;align-items:center;padding:12px 20px}
+.comp-head{font-size:11px;letter-spacing:.03em;text-transform:uppercase;color:var(--faint);font-weight:600;border-bottom:1px solid var(--border)}
+.comp-row{border-bottom:1px solid var(--border);font-size:13px}
+.comp-row:last-child{border-bottom:none}
+.comp-on{background:linear-gradient(90deg,rgba(51,196,106,.1),transparent 60%)}
+.comp-name{display:flex;align-items:center;gap:7px;font-weight:600}
+.comp-check{color:var(--green)}
+.comp-note{font-size:12px;color:var(--muted)}
+.or-chart{display:flex;flex-direction:column;gap:9px}
+.or-row{display:grid;grid-template-columns:220px 1fr 54px;gap:14px;align-items:center}
+.or-feat{font-size:12.5px;color:var(--muted);text-align:right}
+.or-track{position:relative;height:22px}
+.or-axis{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--border-2)}
+.or-bar{position:absolute;top:4px;bottom:4px;border-radius:4px;opacity:.85}
+.or-val{font-size:13px;font-weight:600;text-align:left}
+.or-axislabels{display:flex;justify-content:space-between;font-size:10.5px;color:var(--faint);padding:8px 54px 0 220px;font-family:var(--mono)}
+.filters{margin-bottom:18px}
+.filter-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr .9fr;gap:16px}
+.filter-col label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:8px;font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:6px 11px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:.15s}
+.chip-on{background:rgba(240,82,75,.16);border-color:rgba(240,82,75,.35);color:#ff8a84}
+.dt-grid{grid-template-columns:40px 1.6fr 1fr .8fr .7fr 1fr 1.1fr}
+.clube-grid{grid-template-columns:2fr 1fr .8fr 1fr 1fr}
+.st-grid{grid-template-columns:1.7fr .6fr 1fr 1fr .8fr .9fr 1fr .9fr .8fr}
+.dt-head,.st-head{display:grid;gap:12px;padding:12px 20px;font-size:11px;letter-spacing:.03em;text-transform:uppercase;color:var(--faint);font-weight:600;border-bottom:1px solid var(--border)}
+.dt-row,.st-row{display:grid;gap:12px;padding:12px 20px;font-size:13.5px;border-bottom:1px solid var(--border);align-items:center}
+.dt-row:last-child,.st-row:last-child{border-bottom:none}
+.dt-row:hover,.st-row:hover{background:var(--surface-2)}
+.dt-mut{color:var(--faint)}
+.dt-club{display:flex;align-items:center;gap:9px;font-weight:500}
+.st-name{font-weight:500}
+.st-pts{color:var(--green);font-weight:600}
+.dt-footer{display:flex;justify-content:space-between;align-items:center;padding:13px 20px;font-size:12px;color:var(--faint)}
+.dist-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.dist-cell{text-align:center;padding:14px;background:var(--surface-2);border:1px solid var(--border);border-radius:13px}
+.dist-big{font-family:var(--serif);font-weight:700;font-size:38px;line-height:1}
+.dist-lbl{font-size:13px;font-weight:600;margin:6px 0 10px}
+.dist-bar{height:7px;background:var(--surface-3);border-radius:6px;overflow:hidden;margin-bottom:7px}
+.dist-bar>div{height:100%;border-radius:6px}
+.jan-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.jan-cell{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.sens-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:980px){.sens-grid{grid-template-columns:1fr}}
+.desc-season{margin:14px 0 18px}
+.desc-season label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:8px;font-weight:500}
+.select{display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;font-size:13.5px;color:var(--text);cursor:pointer}
+.select>svg{color:var(--muted)}
+.select-sm{max-width:220px}
+.boxplots{display:flex;flex-direction:column;gap:18px;padding:6px 0}
+.boxrow{display:grid;grid-template-columns:160px 1fr 90px;gap:14px;align-items:center}
+.box-name{font-size:12.5px;color:var(--muted);text-align:right}
+.box-track{position:relative;height:30px}
+.box-whisker{position:absolute;top:50%;height:2px;transform:translateY(-50%);opacity:.5;border-radius:2px}
+.box-iqr{position:absolute;top:6px;bottom:6px;border-radius:5px;opacity:.32}
+.box-med{position:absolute;top:4px;bottom:4px;width:3px;background:#fff;border-radius:2px}
+.box-cap{position:absolute;top:10px;bottom:10px;width:2px;background:rgba(255,255,255,.55)}
+.box-range{font-family:var(--mono);font-size:11.5px;color:var(--faint);text-align:left}
+.screen{animation:fade .4s ease}
+@keyframes fade{from{transform:translateY(8px)}to{transform:none}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+
+<!-- DADOS REAIS -->
+<script>
+window.MODEL = {
+  algoritmo:"Regressão Logística",
+  treino:"2014 – 2022",
+  teste:"2023 – 2024",
+  acuracia:0.8,
+  aucTeste:0.8281,
+  aucCV:0.794,
+  aucCVstd:0.058,
+  validacao:"Walk-forward (5 folds)",
+  modelosTestados:["LR","RF","XGB","LGB"],
+  registros:220,clubesUnicos:34,temporadas:11,rebaixamentos:44,
+};
+window.MODELOS_COMP = [{"nome": "LightGBM", "sigla": "LGB", "auc": 0.7, "aucTeste": 0.877, "acc": 0.825, "f1": 0.65, "escolhido": false, "nota": "Melhor AUC no teste, porém alta variância (±0.151)"}, {"nome": "Random Forest", "sigla": "RF", "auc": 0.762, "aucTeste": 0.844, "acc": 0.8, "f1": 0.6, "escolhido": false, "nota": "Bom AUC; menos interpretável"}, {"nome": "Regressão Logística", "sigla": "LR", "auc": 0.794, "aucTeste": 0.828125, "acc": 0.8, "f1": 0.5, "escolhido": true, "nota": "Melhor estabilidade walk-forward (±0.058) + interpretável"}, {"nome": "XGBoost", "sigla": "XGB", "auc": 0.659, "aucTeste": 0.652, "acc": 0.825, "f1": 0.55, "escolhido": false, "nota": "Alta acurácia mas AUC baixo — viés para classe majoritária"}];
+window.FEATURES = {
+  elenco:[
+    {nome:"Tamanho do plantel",desc:"Nº de atletas no elenco"},
+    {nome:"Nº de estrangeiros",desc:"Atletas não-brasileiros"},
+    {nome:"Valor de mercado total",desc:"Soma do valor de mercado (M€)"},
+  ],
+  janelas:[
+    "Pontos · média 3 e 5 temporadas","Saldo de gols · média 3 e 5",
+    "Gols marcados · média 3 e 5","Gols sofridos · média 3 e 5",
+    "Vitórias · média 3 e 5","Aproveitamento (%) · média 3 e 5",
+  ],
+};
+window.COEFS = [{"feat": "Valor de mercado", "coef": -0.931, "or": 0.3942}, {"feat": "V média 3", "coef": -0.7028, "or": 0.4952}, {"feat": "Tamanho do plantel", "coef": 0.5491, "or": 1.7317}, {"feat": "Gols Contra média 5", "coef": 0.4938, "or": 1.6385}, {"feat": "Pontos média 3", "coef": 0.416, "or": 1.5159}, {"feat": "Gols Pró média 5", "coef": -0.3965, "or": 0.6726}, {"feat": "Aproveitamento média 3", "coef": 0.3739, "or": 1.4534}, {"feat": "Pontos média 5", "coef": 0.3664, "or": 1.4425}, {"feat": "Aproveitamento média 5", "coef": 0.3331, "or": 1.3954}, {"feat": "Saldo Gols média 3", "coef": 0.2454, "or": 1.2781}, {"feat": "Saldo Gols média 5", "coef": -0.2241, "or": 0.7992}, {"feat": "V média 5", "coef": -0.214, "or": 0.8073}, {"feat": "Gols Contra média 3", "coef": 0.1743, "or": 1.1905}, {"feat": "Gols Pró média 3", "coef": -0.1505, "or": 0.8603}, {"feat": "Nº de estrangeiros", "coef": -0.0504, "or": 0.9508}];
+window.CONFUSION = {tn:28,fp:4,fn:4,tp:4};
+window.ROC = [[0.0, 0.0], [0.0, 0.0], [0.0, 0.125], [0.0625, 0.125], [0.0625, 0.125], [0.0625, 0.25], [0.0938, 0.25], [0.0938, 0.5], [0.0938, 0.5], [0.125, 0.5], [0.125, 0.625], [0.1562, 0.625], [0.1562, 0.625], [0.1562, 0.75], [0.3438, 0.75], [0.3438, 0.875], [0.3438, 0.875], [0.5, 0.875], [0.5, 1.0], [1.0, 1.0]];
+window.CALIB = [[0.0115, 0.0], [0.0548, 0.0], [0.127, 0.1429], [0.2174, 0.1667], [0.3858, 0.2857], [0.6986, 0.5714]];
+window.CLUBES_2025 = [{"nome": "Flamengo", "uf": "RJ", "cor": "#E03A3E", "vm": 273.5, "plantel": 74, "estr": 12, "pts5": 68.0, "sg3": 18.0, "apr": 59.66, "promovido": false, "prob": 0.0016}, {"nome": "Palmeiras", "uf": "SP", "cor": "#1B7A3D", "vm": 260.4, "plantel": 54, "estr": 11, "pts5": 69.6, "sg3": 32.3, "apr": 61.06, "promovido": false, "prob": 0.0004}, {"nome": "Botafogo", "uf": "RJ", "cor": "#2a2a2a", "vm": 214.7, "plantel": 82, "estr": 17, "pts5": 53.2, "sg3": 16.3, "apr": 46.66, "promovido": false, "prob": 0.025}, {"nome": "Santos", "uf": "SP", "cor": "#2a2a2a", "vm": 150.0, "plantel": 52, "estr": 12, "pts5": 53.6, "sg3": -9.0, "apr": 47.02, "promovido": true, "prob": 0.0292}, {"nome": "Atletico Mineiro", "uf": "MG", "cor": "#2a2a2a", "vm": 127.8, "plantel": 67, "estr": 7, "pts5": 64.6, "sg3": 7.0, "apr": 56.66, "promovido": false, "prob": 0.0933}, {"nome": "Gremio", "uf": "RS", "cor": "#1A6BB5", "vm": 124.7, "plantel": 58, "estr": 13, "pts5": 56.0, "sg3": -2.0, "apr": 49.12, "promovido": false, "prob": 0.0501}, {"nome": "Vasco da Gama", "uf": "RJ", "cor": "#2a2a2a", "vm": 122.6, "plantel": 70, "estr": 14, "pts5": 45.6, "sg3": -14.0, "apr": 40.02, "promovido": false, "prob": 0.2407}, {"nome": "Cruzeiro", "uf": "MG", "cor": "#1A3B8B", "vm": 121.4, "plantel": 50, "estr": 10, "pts5": 49.0, "sg3": -4.7, "apr": 42.98, "promovido": false, "prob": 0.0408}, {"nome": "Corinthians", "uf": "SP", "cor": "#2a2a2a", "vm": 105.4, "plantel": 47, "estr": 11, "pts5": 55.8, "sg3": 5.3, "apr": 48.94, "promovido": false, "prob": 0.064}, {"nome": "Sao Paulo", "uf": "SP", "cor": "#E03A3E", "vm": 99.2, "plantel": 55, "estr": 12, "pts5": 56.0, "sg3": 8.3, "apr": 49.14, "promovido": false, "prob": 0.0898}, {"nome": "Bahia", "uf": "BA", "cor": "#1A6BB5", "vm": 99.1, "plantel": 72, "estr": 6, "pts5": 46.6, "sg3": -4.0, "apr": 40.88, "promovido": false, "prob": 0.3309}, {"nome": "Fluminense", "uf": "RJ", "cor": "#7A1F2B", "vm": 89.3, "plantel": 71, "estr": 12, "pts5": 58.0, "sg3": 6.7, "apr": 50.88, "promovido": false, "prob": 0.2582}, {"nome": "Bragantino", "uf": "SP", "cor": "#E03A3E", "vm": 86.5, "plantel": 52, "estr": 9, "pts5": 51.8, "sg3": 0.0, "apr": 45.44, "promovido": false, "prob": 0.1308}, {"nome": "Internacional", "uf": "RS", "cor": "#E03A3E", "vm": 83.2, "plantel": 52, "estr": 12, "pts5": 62.2, "sg3": 15.0, "apr": 54.54, "promovido": false, "prob": 0.091}, {"nome": "Fortaleza", "uf": "CE", "cor": "#1A3B8B", "vm": 62.0, "plantel": 57, "estr": 15, "pts5": 55.2, "sg3": 7.3, "apr": 48.42, "promovido": false, "prob": 0.2794}, {"nome": "Sport Recife", "uf": "PE", "cor": "#E03A3E", "vm": 52.9, "plantel": 76, "estr": 9, "pts5": 42.8, "sg3": -18.0, "apr": 37.52, "promovido": true, "prob": 0.7688}, {"nome": "Vitoria", "uf": "BA", "cor": "#E03A3E", "vm": 43.3, "plantel": 69, "estr": 6, "pts5": 42.0, "sg3": -14.0, "apr": 36.84, "promovido": false, "prob": 0.7672}, {"nome": "Ceara", "uf": "CE", "cor": "#2a2a2a", "vm": 35.7, "plantel": 48, "estr": 5, "pts5": 44.4, "sg3": -1.0, "apr": 38.96, "promovido": true, "prob": 0.3526}, {"nome": "Juventude", "uf": "RS", "cor": "#1B7A3D", "vm": 31.6, "plantel": 57, "estr": 5, "pts5": 37.7, "sg3": -19.7, "apr": 33.067, "promovido": false, "prob": 0.7937}, {"nome": "Mirassol", "uf": "SP", "cor": "#1B7A3D", "vm": 28.4, "plantel": 50, "estr": 0, "pts5": 53.1, "sg3": 2.0, "apr": 46.6, "promovido": true, "prob": 0.4363}];
+window.HIST_SAMPLE = [{"clube": "Sao Paulo", "temp": 2014, "plantel": 45, "estr": 6, "vm": 149.65, "sit": "Top 4"}, {"clube": "Corinthians", "temp": 2014, "plantel": 44, "estr": 6, "vm": 87.55, "sit": "Top 4"}, {"clube": "Santos", "temp": 2014, "plantel": 49, "estr": 6, "vm": 73.4, "sit": "Série A"}, {"clube": "Atletico Mineiro", "temp": 2014, "plantel": 55, "estr": 2, "vm": 63.85, "sit": "Série A"}, {"clube": "Fluminense", "temp": 2014, "plantel": 43, "estr": 2, "vm": 48.8, "sit": "Série A"}, {"clube": "Palmeiras", "temp": 2014, "plantel": 55, "estr": 8, "vm": 47.1, "sit": "Série A"}, {"clube": "Gremio", "temp": 2014, "plantel": 63, "estr": 6, "vm": 46.5, "sit": "Série A"}, {"clube": "Flamengo", "temp": 2014, "plantel": 56, "estr": 6, "vm": 44.75, "sit": "Série A"}, {"clube": "Cruzeiro", "temp": 2014, "plantel": 44, "estr": 4, "vm": 43.55, "sit": "Top 4"}, {"clube": "Internacional", "temp": 2014, "plantel": 60, "estr": 5, "vm": 35.15, "sit": "Top 4"}, {"clube": "Botafogo", "temp": 2014, "plantel": 61, "estr": 7, "vm": 28.95, "sit": "Rebaixado"}, {"clube": "Vitoria", "temp": 2014, "plantel": 71, "estr": 8, "vm": 25.3, "sit": "Rebaixado"}];
+window.VM_MEDIO = [["Flamengo", 118.7], ["Palmeiras", 94.1], ["Sao Paulo", 89.3], ["Corinthians", 89.0], ["Atletico Mineiro", 85.2], ["Gremio", 71.6], ["Internacional", 70.6], ["Cruzeiro", 66.9], ["Santos", 57.2], ["Botafogo", 56.4], ["Vasco da Gama", 54.7], ["Fluminense", 50.8], ["Bragantino", 49.7], ["Bahia", 44.5], ["Athletico Paranaense", 39.5], ["Vitoria", 33.9], ["Fortaleza", 33.1], ["Sport Recife", 31.6], ["Coritiba", 30.8], ["CSA", 28.7]];
+window.DESC_BY_SEASON = {"2014": {"resumo": {"clubes": 20, "plantelMedio": 56.8, "vmMedio": 40.7, "ptsMedio": 52.4}, "stats": [{"v": "Tamanho do plantel", "n": 20, "media": 56.75, "std": 10.26, "min": 43.0, "q1": 48.0, "med": 55.5, "q3": 64.25, "max": 76.0}, {"v": "Nº de estrangeiros", "n": 20, "media": 4.4, "std": 2.46, "min": 0.0, "q1": 2.0, "med": 5.5, "q3": 6.0, "max": 8.0}, {"v": "VM Total (M€)", "n": 20, "media": 40.67, "std": 34.03, "min": 5.5, "q1": 20.34, "med": 32.0, "q3": 47.52, "max": 149.7}, {"v": "Pontos", "n": 20, "media": 52.4, "std": 13.37, "min": 32.0, "q1": 42.25, "med": 52.0, "q3": 61.25, "max": 80.0}], "clubes": [{"clube": "Cruzeiro", "plantel": 44, "estr": 4, "vm": 43.55, "pts": 80}, {"clube": "Sao Paulo", "plantel": 45, "estr": 6, "vm": 149.65, "pts": 70}, {"clube": "Internacional", "plantel": 60, "estr": 5, "vm": 35.15, "pts": 69}, {"clube": "Corinthians", "plantel": 44, "estr": 6, "vm": 87.55, "pts": 69}, {"clube": "Atletico Mineiro", "plantel": 55, "estr": 2, "vm": 63.85, "pts": 62}, {"clube": "Fluminense", "plantel": 43, "estr": 2, "vm": 48.8, "pts": 61}, {"clube": "Gremio", "plantel": 63, "estr": 6, "vm": 46.5, "pts": 61}, {"clube": "Athletico Paranaense", "plantel": 64, "estr": 3, "vm": 9.45, "pts": 54}, {"clube": "Santos", "plantel": 49, "estr": 6, "vm": 73.4, "pts": 53}, {"clube": "Flamengo", "plantel": 56, "estr": 6, "vm": 44.75, "pts": 52}]}, "2015": {"resumo": {"clubes": 20, "plantelMedio": 54.5, "vmMedio": 35.8, "ptsMedio": 52.5}, "stats": [{"v": "Tamanho do plantel", "n": 20, "media": 54.5, "std": 9.16, "min": 43.0, "q1": 47.5, "med": 54.0, "q3": 58.75, "max": 80.0}, {"v": "Nº de estrangeiros", "n": 20, "media": 3.65, "std": 2.81, "min": 0.0, "q1": 1.0, "med": 3.5, "q3": 6.25, "max": 8.0}, {"v": "VM Total (M€)", "n": 20, "media": 35.79, "std": 25.6, "min": 5.4, "q1": 13.49, "med": 32.1, "q3": 55.45, "max": 91.2}, {"v": "Pontos", "n": 20, "media": 52.45, "std": 11.93, "min": 31.0, "q1": 43.75, "med": 51.0, "q3": 59.25, "max": 81.0}], "clubes": [{"clube": "Corinthians", "plantel": 44, "estr": 5, "vm": 54.0, "pts": 81}, {"clube": "Atletico Mineiro", "plantel": 44, "estr": 3, "vm": 50.88, "pts": 69}, {"clube": "Gremio", "plantel": 56, "estr": 7, "vm": 48.73, "pts": 68}, {"clube": "Sao Paulo", "plantel": 49, "estr": 5, "vm": 91.15, "pts": 62}, {"clube": "Internacional", "plantel": 57, "estr": 5, "vm": 68.25, "pts": 60}, {"clube": "Sport Recife", "plantel": 51, "estr": 0, "vm": 18.55, "pts": 59}, {"clube": "Santos", "plantel": 46, "estr": 4, "vm": 33.83, "pts": 58}, {"clube": "Cruzeiro", "plantel": 48, "estr": 6, "vm": 64.7, "pts": 55}, {"clube": "Palmeiras", "plantel": 54, "estr": 7, "vm": 66.45, "pts": 53}, {"clube": "Athletico Paranaense", "plantel": 80, "estr": 7, "vm": 15.2, "pts": 51}]}, "2016": {"resumo": {"clubes": 20, "plantelMedio": 54.2, "vmMedio": 34.9, "ptsMedio": 52.1}, "stats": [{"v": "Tamanho do plantel", "n": 20, "media": 54.2, "std": 7.74, "min": 41.0, "q1": 48.0, "med": 54.0, "q3": 59.5, "max": 67.0}, {"v": "Nº de estrangeiros", "n": 20, "media": 4.5, "std": 2.33, "min": 0.0, "q1": 2.0, "med": 5.0, "q3": 6.0, "max": 8.0}, {"v": "VM Total (M€)", "n": 20, "media": 34.9, "std": 16.09, "min": 13.2, "q1": 19.74, "med": 34.6, "q3": 52.11, "max": 61.9}, {"v": "Pontos", "n": 20, "media": 52.15, "std": 12.83, "min": 28.0, "q1": 45.75, "med": 52.0, "q3": 57.5, "max": 80.0}], "clubes": [{"clube": "Palmeiras", "plantel": 47, "estr": 5, "vm": 51.95, "pts": 80}, {"clube": "Flamengo", "plantel": 42, "estr": 6, "vm": 61.9, "pts": 71}, {"clube": "Santos", "plantel": 53, "estr": 8, "vm": 18.53, "pts": 71}, {"clube": "Atletico Mineiro", "plantel": 61, "estr": 6, "vm": 52.6, "pts": 62}, {"clube": "Botafogo", "plantel": 52, "estr": 5, "vm": 17.1, "pts": 59}, {"clube": "Athletico Paranaense", "plantel": 67, "estr": 6, "vm": 29.3, "pts": 57}, {"clube": "Corinthians", "plantel": 44, "estr": 2, "vm": 33.9, "pts": 55}, {"clube": "Gremio", "plantel": 55, "estr": 4, "vm": 40.8, "pts": 53}, {"clube": "Ponte Preta", "plantel": 65, "estr": 0, "vm": 23.95, "pts": 53}, {"clube": "Chapecoense", "plantel": 63, "estr": 2, "vm": 21.9, "pts": 52}]}, "2017": {"resumo": {"clubes": 20, "plantelMedio": 53.3, "vmMedio": 51.7, "ptsMedio": 51.9}, "stats": [{"v": "Tamanho do plantel", "n": 20, "media": 53.3, "std": 7.39, "min": 43.0, "q1": 47.75, "med": 52.5, "q3": 57.0, "max": 76.0}, {"v": "Nº de estrangeiros", "n": 20, "media": 4.5, "std": 2.06, "min": 0.0, "q1": 3.0, "med": 4.5, "q3": 6.0, "max": 9.0}, {"v": "VM Total (M€)", "n": 20, "media": 51.7, "std": 25.05, "min": 14.9, "q1": 34.42, "med": 45.8, "q3": 68.55, "max": 98.6}, {"v": "Pontos", "n": 20, "media": 51.85, "std": 9.06, "min": 36.0, "q1": 44.5, "med": 52.0, "q3": 56.25, "max": 72.0}], "clubes": [{"clube": "Corinthians", "plantel": 43, "estr": 3, "vm": 56.2, "pts": 72}, {"clube": "Palmeiras", "plantel": 47, "estr": 4, "vm": 73.95, "pts": 63}, {"clube": "Santos", "plantel": 47, "estr": 5, "vm": 52.2, "pts": 63}, {"clube": "Gremio", "plantel": 76, "estr": 9, "vm": 66.75, "pts": 62}, {"clube": "Cruzeiro", "plantel": 50, "estr": 6, "vm": 88.4, "pts": 57}, {"clube": "Vasco da Gama", "plantel": 47, "estr": 5, "vm": 45.1, "pts": 56}, {"clube": "Flamengo", "plantel": 48, "estr": 7, "vm": 91.45, "pts": 56}, {"clube": "Chapecoense", "plantel": 62, "estr": 6, "vm": 39.48, "pts": 54}, {"clube": "Atletico Mineiro", "plantel": 57, "estr": 4, "vm": 87.93, "pts": 54}, {"clube": "Botafogo", "plantel": 52, "estr": 5, "vm": 30.4, "pts": 53}]}, "2018": {"resumo": {"clubes": 20, "plantelMedio": 58.4, "vmMedio": 52.2, "ptsMedio": 51.5}, "stats": [{"v": "Tamanho do plantel", "n": 20, "media": 58.4, "std": 5.99, "min": 46.0, "q1": 53.75, "med": 58.0, "q3": 65.0, "max": 68.0}, {"v": "Nº de estrangeiros", "n": 20, "media": 4.6, "std": 2.04, "min": 1.0, "q1": 3.0, "med": 4.5, "q3": 6.25, "max": 8.0}, {"v": "VM Total (M€)", "n": 20, "media": 52.22, "std": 20.94, "min": 20.6, "q1": 32.7, "med": 47.0, "q3": 69.91, "max": 88.3}, {"v": "Pontos", "n": 20, "media": 51.5, "std": 13.6, "min": 23.0, "q1": 43.75, "med": 49.0, "q3": 60.0, "max": 80.0}], "clubes": [{"clube": "Palmeiras", "plantel": 51, "estr": 4, "vm": 88.28, "pts": 80}, {"clube": "Flamengo", "plantel": 56, "estr": 7, "vm": 70.68, "pts": 72}, {"clube": "Internacional", "plantel": 53, "estr": 7, "vm": 59.05, "pts": 69}, {"clube": "Gremio", "plantel": 66, "estr": 3, "vm": 69.65, "pts": 66}, {"clube": "Sao Paulo", "plantel": 57, "estr": 5, "vm": 80.85, "pts": 63}, {"clube": "Atletico Mineiro", "plantel": 61, "estr": 6, "vm": 70.95, "pts": 59}, {"clube": "Athletico Paranaense", "plantel": 65, "estr": 4, "vm": 42.85, "pts": 57}, {"clube": "Cruzeiro", "plantel": 54, "estr": 7, "vm": 66.45, "pts": 53}, {"clube": "Botafogo", "plantel": 46, "estr": 4, "vm": 25.6, "pts": 51}, {"clube": "Santos", "plantel": 52, "estr": 5, "vm": 84.5, "pts": 50}]}, "2019": {"resumo": {"clubes": 20, "plantelMedio": 55.7, "vmMedio": 52.8, "ptsMedio": 52.1}, "stats": [{"v": "Tamanho do plantel", "n": 20, "media": 55.7, "std": 6.38, "min": 46.0, "q1": 49.5, "med": 55.0, "q3": 60.25, "max": 68.0}, {"v": "Nº de estrangeiros", "n": 20, "media": 4.6, "std": 2.58, "min": 0.0, "q1": 2.0, "med": 4.5, "q3": 6.25, "max": 9.0}, {"v": "VM Total (M€)", "n": 20, "media": 52.78, "std": 32.68, "min": 13.3, "q1": 31.96, "med": 43.8, "q3": 63.31, "max": 141.1}, {"v": "Pontos", "n": 20, "media": 52.1, "std": 16.68, "min": 20.0, "q1": 42.0, "med": 50.5, "q3": 63.25, "max": 90.0}], "clubes": [{"clube": "Flamengo", "plantel": 48, "estr": 7, "vm": 118.15, "pts": 90}, {"clube": "Palmeiras", "plantel": 55, "estr": 4, "vm": 141.13, "pts": 74}, {"clube": "Santos", "plantel": 55, "estr": 8, "vm": 68.88, "pts": 74}, {"clube": "Gremio", "plantel": 54, "estr": 2, "vm": 70.75, "pts": 65}, {"clube": "Athletico Paranaense", "plantel": 68, "estr": 6, "vm": 36.95, "pts": 64}, {"clube": "Sao Paulo", "plantel": 62, "estr": 5, "vm": 90.13, "pts": 63}, {"clube": "Internacional", "plantel": 50, "estr": 9, "vm": 61.45, "pts": 57}, {"clube": "Corinthians", "plantel": 54, "estr": 6, "vm": 60.8, "pts": 56}, {"clube": "Fortaleza", "plantel": 48, "estr": 4, "vm": 24.6, "pts": 53}, {"clube": "Goias", "plantel": 61, "estr": 2, "vm": 23.55, "pts": 52}]}, "2020": {"resumo": {"clubes": 20, "plantelMedio": 57.2, "vmMedio": 47.0, "ptsMedio": 51.6}, "stats": [{"v": "Tamanho do plantel", "n": 20, "media": 57.25, "std": 8.67, "min": 42.0, "q1": 50.75, "med": 57.0, "q3": 64.0, "max": 71.0}, {"v": "Nº de estrangeiros", "n": 20, "media": 5.5, "std": 3.17, "min": 0.0, "q1": 3.75, "med": 5.0, "q3": 8.0, "max": 11.0}, {"v": "VM Total (M€)", "n": 20, "media": 47.05, "std": 28.71, "min": 15.5, "q1": 27.49, "med": 37.2, "q3": 66.04, "max": 113.5}, {"v": "Pontos", "n": 20, "media": 51.6, "std": 12.71, "min": 27.0, "q1": 41.75, "med": 52.5, "q3": 60.25, "max": 71.0}], "clubes": [{"clube": "Flamengo", "plantel": 64, "estr": 9, "vm": 105.1, "pts": 71}, {"clube": "Internacional", "plantel": 52, "estr": 11, "vm": 68.25, "pts": 70}, {"clube": "Atletico Mineiro", "plantel": 60, "estr": 11, "vm": 70.15, "pts": 68}, {"clube": "Sao Paulo", "plantel": 47, "estr": 6, "vm": 50.2, "pts": 66}, {"clube": "Fluminense", "plantel": 57, "estr": 3, "vm": 27.53, "pts": 64}, {"clube": "Gremio", "plantel": 51, "estr": 4, "vm": 65.3, "pts": 59}, {"clube": "Palmeiras", "plantel": 57, "estr": 8, "vm": 88.0, "pts": 58}, {"clube": "Santos", "plantel": 55, "estr": 6, "vm": 40.58, "pts": 54}, {"clube": "Bragantino", "plantel": 42, "estr": 5, "vm": 15.48, "pts": 53}, {"clube": "Athletico Paranaense", "plantel": 71, "estr": 5, "vm": 30.85, "pts": 53}]}, "2021": {"resumo": {"clubes": 20, "plantelMedio": 58.1, "vmMedio": 57.7, "ptsMedio": 51.4}, "stats": [{"v": "Tamanho do plantel", "n": 20, "media": 58.1, "std": 8.4, "min": 44.0, "q1": 50.75, "med": 58.5, "q3": 63.0, "max": 74.0}, {"v": "Nº de estrangeiros", "n": 20, "media": 4.85, "std": 2.72, "min": 0.0, "q1": 2.75, "med": 5.0, "q3": 6.0, "max": 11.0}, {"v": "VM Total (M€)", "n": 20, "media": 57.72, "std": 47.08, "min": 13.8, "q1": 26.3, "med": 32.6, "q3": 77.24, "max": 185.6}, {"v": "Pontos", "n": 20, "media": 51.35, "std": 13.59, "min": 15.0, "q1": 46.75, "med": 50.0, "q3": 56.25, "max": 84.0}], "clubes": [{"clube": "Atletico Mineiro", "plantel": 48, "estr": 8, "vm": 106.45, "pts": 84}, {"clube": "Flamengo", "plantel": 62, "estr": 5, "vm": 185.6, "pts": 71}, {"clube": "Palmeiras", "plantel": 58, "estr": 5, "vm": 93.25, "pts": 66}, {"clube": "Fortaleza", "plantel": 46, "estr": 4, "vm": 31.2, "pts": 58}, {"clube": "Corinthians", "plantel": 50, "estr": 6, "vm": 132.35, "pts": 57}, {"clube": "Bragantino", "plantel": 44, "estr": 5, "vm": 33.8, "pts": 56}, {"clube": "Fluminense", "plantel": 63, "estr": 7, "vm": 39.13, "pts": 54}, {"clube": "Atletico Goianiense", "plantel": 63, "estr": 1, "vm": 24.7, "pts": 53}, {"clube": "America Mineiro", "plantel": 57, "estr": 2, "vm": 16.95, "pts": 53}, {"clube": "Santos", "plantel": 63, "estr": 5, "vm": 53.7, "pts": 50}]}, "2022": {"resumo": {"clubes": 20, "plantelMedio": 54.0, "vmMedio": 62.0, "ptsMedio": 51.6}, "stats": [{"v": "Tamanho do plantel", "n": 20, "media": 54.05, "std": 8.15, "min": 42.0, "q1": 47.75, "med": 52.0, "q3": 61.25, "max": 70.0}, {"v": "Nº de estrangeiros", "n": 20, "media": 5.85, "std": 2.81, "min": 0.0, "q1": 3.0, "med": 6.0, "q3": 8.0, "max": 10.0}, {"v": "VM Total (M€)", "n": 20, "media": 61.97, "std": 45.77, "min": 16.6, "q1": 26.47, "med": 45.3, "q3": 88.7, "max": 181.9}, {"v": "Pontos", "n": 20, "media": 51.6, "std": 14.46, "min": 22.0, "q1": 41.75, "med": 53.0, "q3": 59.0, "max": 81.0}], "clubes": [{"clube": "Palmeiras", "plantel": 42, "estr": 6, "vm": 111.6, "pts": 81}, {"clube": "Internacional", "plantel": 51, "estr": 10, "vm": 104.43, "pts": 73}, {"clube": "Fluminense", "plantel": 46, "estr": 5, "vm": 41.28, "pts": 70}, {"clube": "Corinthians", "plantel": 52, "estr": 7, "vm": 131.9, "pts": 65}, {"clube": "Flamengo", "plantel": 61, "estr": 5, "vm": 181.95, "pts": 62}, {"clube": "Athletico Paranaense", "plantel": 67, "estr": 9, "vm": 70.93, "pts": 58}, {"clube": "Atletico Mineiro", "plantel": 44, "estr": 8, "vm": 115.0, "pts": 58}, {"clube": "Fortaleza", "plantel": 43, "estr": 7, "vm": 32.65, "pts": 55}, {"clube": "Sao Paulo", "plantel": 48, "estr": 10, "vm": 67.88, "pts": 54}, {"clube": "Botafogo", "plantel": 62, "estr": 6, "vm": 83.45, "pts": 53}]}, "2023": {"resumo": {"clubes": 20, "plantelMedio": 54.2, "vmMedio": 83.3, "ptsMedio": 52.1}, "stats": [{"v": "Tamanho do plantel", "n": 20, "media": 54.2, "std": 9.45, "min": 40.0, "q1": 47.5, "med": 53.5, "q3": 61.25, "max": 72.0}, {"v": "Nº de estrangeiros", "n": 20, "media": 7.55, "std": 3.24, "min": 1.0, "q1": 6.5, "med": 8.0, "q3": 10.0, "max": 14.0}, {"v": "VM Total (M€)", "n": 20, "media": 83.32, "std": 41.49, "min": 21.4, "q1": 58.18, "med": 76.5, "q3": 103.03, "max": 193.1}, {"v": "Pontos", "n": 20, "media": 52.1, "std": 12.46, "min": 24.0, "q1": 44.75, "med": 53.5, "q3": 62.5, "max": 70.0}], "clubes": [{"clube": "Palmeiras", "plantel": 42, "estr": 7, "vm": 120.5, "pts": 70}, {"clube": "Gremio", "plantel": 62, "estr": 10, "vm": 99.98, "pts": 68}, {"clube": "Flamengo", "plantel": 58, "estr": 5, "vm": 193.1, "pts": 66}, {"clube": "Atletico Mineiro", "plantel": 40, "estr": 7, "vm": 138.4, "pts": 66}, {"clube": "Botafogo", "plantel": 64, "estr": 14, "vm": 126.43, "pts": 64}, {"clube": "Bragantino", "plantel": 49, "estr": 7, "vm": 75.85, "pts": 62}, {"clube": "Fluminense", "plantel": 59, "estr": 7, "vm": 77.7, "pts": 56}, {"clube": "Athletico Paranaense", "plantel": 53, "estr": 8, "vm": 57.73, "pts": 56}, {"clube": "Internacional", "plantel": 41, "estr": 11, "vm": 77.15, "pts": 55}, {"clube": "Fortaleza", "plantel": 44, "estr": 8, "vm": 45.33, "pts": 54}]}, "2024": {"resumo": {"clubes": 20, "plantelMedio": 54.8, "vmMedio": 90.4, "ptsMedio": 52.0}, "stats": [{"v": "Tamanho do plantel", "n": 20, "media": 54.8, "std": 8.02, "min": 43.0, "q1": 48.75, "med": 54.5, "q3": 60.25, "max": 69.0}, {"v": "Nº de estrangeiros", "n": 20, "media": 9.05, "std": 3.53, "min": 2.0, "q1": 7.75, "med": 9.5, "q3": 11.25, "max": 14.0}, {"v": "VM Total (M€)", "n": 20, "media": 90.38, "std": 51.57, "min": 21.6, "q1": 41.94, "med": 93.0, "q3": 125.26, "max": 214.2}, {"v": "Pontos", "n": 20, "media": 51.95, "std": 13.57, "min": 30.0, "q1": 44.75, "med": 48.5, "q3": 60.5, "max": 79.0}], "clubes": [{"clube": "Botafogo", "plantel": 59, "estr": 12, "vm": 131.43, "pts": 79}, {"clube": "Palmeiras", "plantel": 43, "estr": 8, "vm": 153.1, "pts": 73}, {"clube": "Flamengo", "plantel": 69, "estr": 10, "vm": 214.15, "pts": 70}, {"clube": "Fortaleza", "plantel": 43, "estr": 10, "vm": 45.05, "pts": 68}, {"clube": "Internacional", "plantel": 51, "estr": 13, "vm": 123.23, "pts": 65}, {"clube": "Sao Paulo", "plantel": 49, "estr": 13, "vm": 113.75, "pts": 59}, {"clube": "Corinthians", "plantel": 57, "estr": 11, "vm": 145.5, "pts": 56}, {"clube": "Bahia", "plantel": 63, "estr": 7, "vm": 76.95, "pts": 53}, {"clube": "Cruzeiro", "plantel": 51, "estr": 8, "vm": 101.68, "pts": 52}, {"clube": "Vasco da Gama", "plantel": 64, "estr": 13, "vm": 106.95, "pts": 50}]}};
+window.DESC_TEMPORADAS = ["2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024"];
+/* compatibilidade com a versão anterior da tela */
+window.DESC_2024 = window.DESC_BY_SEASON["2024"];
+window.SENS_FAIXAS = {"plantel": [40, 82], "estr": [0, 17], "vm": [5, 283]};
+</script>
+<!-- MODELO REAL -->
+<script>
+/* Parâmetros reais do modelo treinado */
+window._SCALER_MEAN  = [55.805556, 4.716667, 48.309389, 53.661111, 53.572407, 2.218519, 2.085093, 45.009259, 45.043889, 43.042593, 43.116204, 14.599074, 14.653889, 47.086759, 47.010157];
+window._SCALER_SCALE = [8.107676, 2.584731, 32.647704, 9.02734, 8.5499, 12.048914, 11.240879, 8.043031, 7.47512, 6.093614, 5.717094, 3.105386, 2.948001, 7.923972, 7.50475];
+window._MODEL_COEF   = [0.549084, -0.050405, -0.930966, 0.416026, 0.36636, 0.245378, -0.224098, -0.150472, -0.396548, 0.174332, 0.493784, -0.702798, -0.214001, 0.373877, 0.333146];
+window._MODEL_INTERCEPT = -0.537058;
+window._MEDIAN_JANELAS  = [53.3333, 53.125, 2.0, 2.0417, 43.6667, 44.5, 43.0, 43.2917, 14.5, 14.7333, 46.7833, 46.6];
+
+/* Índices das features: [Plantel=0, Estrangeiros=1, VM=2, jan0..jan11=3..14] */
+
+window.predictProb = function(c) {
+  // FEATURES order: Plantel, Estrangeiros, VM, Pts3, Pts5, SG3, SG5,
+  //                 GPro3, GPro5, GContra3, GContra5, V3, V5, Apr3, Apr5
+  var med = window._MEDIAN_JANELAS;
+  var feats = [
+    c.plantel   != null ? c.plantel   : window.SENS_BASE.plantel,
+    c.estr      != null ? c.estr      : window.SENS_BASE.estr,
+    c.vm        != null ? c.vm        : window.SENS_BASE.vm,
+    c.pts3      != null ? c.pts3      : med[0],
+    c.pts5      != null ? c.pts5      : med[1],
+    c.sg3       != null ? c.sg3       : med[2],
+    c.sg5       != null ? c.sg5       : med[3],
+    c.gPro3     != null ? c.gPro3     : med[4],
+    c.gPro5     != null ? c.gPro5     : med[5],
+    c.gContra3  != null ? c.gContra3  : med[6],
+    c.gContra5  != null ? c.gContra5  : med[7],
+    c.vit3      != null ? c.vit3      : med[8],
+    c.vit5      != null ? c.vit5      : med[9],
+    c.apr3      != null ? c.apr3      : med[10],
+    c.apr5      != null ? c.apr5      : med[11],
+  ];
+  var logit = window._MODEL_INTERCEPT;
+  for (var i = 0; i < 15; i++) {
+    logit += window._MODEL_COEF[i] * (feats[i] - window._SCALER_MEAN[i]) / window._SCALER_SCALE[i];
+  }
+  return 1 / (1 + Math.exp(-logit));
+};
+
+/* predictSimple: recebe os inputs do simulador. O aproveitamento entra em
+   PERCENTUAL (0-100), que é a escala da base de treino (média 47,1 · dp 7,9).
+   BUG CORRIGIDO: antes havia um "apr / 100" aqui, que enviava 0,175 no lugar
+   de 17,5 — cerca de 5,9 desvios abaixo da média. Como os dois coeficientes de
+   aproveitamento são positivos, isso subtraía ~4,3 do log-odds e fazia o
+   simulador devolver risco baixo mesmo com todos os indicadores no pior valor. */
+window.predictSimple = function(plantel, estr, vm, pts, sg, gPro, gContra, vit, apr) {
+  return window.predictProb({
+    plantel: plantel, estr: estr, vm: vm,
+    pts3: pts,  pts5: pts,
+    sg3: sg,    sg5: sg,
+    gPro3: gPro,    gPro5: gPro,
+    gContra3: gContra, gContra5: gContra,
+    vit3: vit,  vit5: vit,
+    apr3: apr, apr5: apr,
+  });
+};
+
+window.riskBand = function(p) {
+  if (p >= 0.50) return {label:"Risco alto",   key:"alto",  cor:"var(--red)"};
+  if (p >= 0.30) return {label:"Risco moderado",key:"medio",cor:"var(--amber)"};
+  if (p >= 0.15) return {label:"Atenção",       key:"baixo",cor:"var(--lime)"};
+  return {label:"Risco baixo", key:"seguro", cor:"var(--green)"};
+};
+
+window.ranking2025 = function() {
+  return window.CLUBES_2025.slice().sort(function(a,b){return b.prob - a.prob;});
+};
+
+/* Médias reais do período de treino (2014–2022) — não usar valores chutados:
+   o scaler foi ajustado nesse período, então é aqui que o modelo está "centrado". */
+window.SENS_BASE = {plantel:56, estr:5, vm:48};
+
+window.sensCurve = function(varName, range) {
+  var pts = [];
+  for (var i = 0; i <= 60; i++) {
+    var x = range[0] + (range[1] - range[0]) * (i / 60);
+    var c = {plantel:window.SENS_BASE.plantel, estr:window.SENS_BASE.estr, vm:window.SENS_BASE.vm};
+    c[varName] = x;
+    pts.push([x, window.predictProb(c)]);
+  }
+  return pts;
+};
+
+window.fmtPct = function(p, d) {
+  d = d != null ? d : 1;
+  return (p * 100).toFixed(d).replace(".", ",") + "%";
+};
+window.fmtNum = function(n, d) {
+  d = d != null ? d : 1;
+  return Number(n).toLocaleString("pt-BR", {minimumFractionDigits:d, maximumFractionDigits:d});
+};
+</script>
+
+<!-- COMPONENTES UI -->
+<script type="text/babel">const ICONS = {
+  trophy: "M6 9a6 6 0 0 0 12 0V4H6v5ZM6 4H3v2a3 3 0 0 0 3 3M18 4h3v2a3 3 0 0 1-3 3M9 18h6M12 14v4M8 21h8",
+  history: "M3 12a9 9 0 1 0 3-6.7L3 8M3 4v4h4M12 8v4l3 2",
+  sliders: "M4 6h10M18 6h2M4 12h2M10 12h10M4 18h8M16 18h4M14 4v4M6 10v4M12 16v4",
+  bars: "M4 20V10M10 20V4M16 20v-8M22 20H2",
+  target: "M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0-18 0M12 12m-5 0a5 5 0 1 0 10 0a5 5 0 1 0-10 0M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0",
+  users: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13A4 4 0 0 1 16 11",
+  globe: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20Z",
+  wallet: "M20 7H5a2 2 0 0 1 0-4h13v4M3 5v14a2 2 0 0 0 2 2h16V7M16 14h.01",
+  download: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3",
+  chevron: "M6 9l6 6 6-6",
+  check: "M20 6L9 17l-5-5",
+  x: "M18 6L6 18M6 6l12 12",
+  search: "M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM21 21l-4.3-4.3",
+  flame: "M12 2c1 3 4 5 4 9a4 4 0 0 1-8 0c0-1 .3-2 1-3 .3 2 1.5 2.5 1.5 2.5C10 9 9 7 12 2Z",
+  shield: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z",
+  down: "M22 17l-8.5-8.5-5 5L2 7M16 17h6v-6",
+  up: "M22 7l-8.5 8.5-5-5L2 17M16 7h6v6",
+  info: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM12 16v-4M12 8h.01",
+  grid: "M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z",
+  activity: "M22 12h-4l-3 9L9 3l-3 9H2",
+  scale: "M12 3v18M5 7l-3 6a4 4 0 0 0 6 0L5 7ZM19 7l-3 6a4 4 0 0 0 6 0l-3-6ZM7 21h10M5 7l7-2 7 2",
+  layers: "M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5",
+  filter: "M22 3H2l8 9.46V19l4 2v-8.54L22 3Z",
+};
+
+function Icon({ name, size = 18, stroke = 2, style, className }) {
+  const d = ICONS[name];
+  if (!d) return null;
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" strokeWidth={stroke}
+      strokeLinecap="round" strokeLinejoin="round" style={style}>
+      {d.split("M").filter(Boolean).map((seg, i) => <path key={i} d={"M" + seg} />)}
+    </svg>
+  );
+}
+
+function SectionTitle({ kicker, children, right }) {
+  return (
+    <div className="sec-title">
+      <div>
+        {kicker && <div className="sec-kicker">{kicker}</div>}
+        <h2>{children}</h2>
+      </div>
+      {right}
+    </div>
+  );
+}
+
+function Card({ children, className = "", style, pad = true }) {
+  return <div className={`card ${pad ? "card-pad" : ""} ${className}`} style={style}>{children}</div>;
+}
+
+function StatCard({ label, value, unit, sub, accent }) {
+  return (
+    <div className="stat">
+      <div className="stat-label">{label}</div>
+      <div className="stat-value" style={accent ? { color: accent } : null}>
+        {value}{unit && <span className="stat-unit">{unit}</span>}
+      </div>
+      {sub && <div className="stat-sub">{sub}</div>}
+    </div>
+  );
+}
+
+function Tabs({ tabs, active, onChange }) {
+  return (
+    <div className="tabs">
+      {tabs.map((t) => (
+        <button key={t.id}
+          className={`tab ${active === t.id ? "tab-on" : ""}`}
+          onClick={() => onChange(t.id)}>
+          {t.icon && <Icon name={t.icon} size={16} />}
+          <span>{t.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Badge({ children, tone = "neutral", style }) {
+  return <span className={`badge badge-${tone}`} style={style}>{children}</span>;
+}
+
+function Crest({ club, size = 28 }) {
+  const words = (club.nome || "").split(" ").filter((w) => w.length > 2);
+  const initials = (words.length >= 2
+    ? words.slice(0, 2).map((w) => w[0]).join("")
+    : (club.nome || "??").replace(/[^A-Za-zÀ-ÿ]/g, "").slice(0, 2)).toUpperCase();
+  return (
+    <span className="crest" style={{
+      width: size, height: size, background: club.cor || "#3a3a3a",
+      fontSize: size * 0.38,
+    }}>{initials}</span>
+  );
+}
+
+function ProbBar({ p, height = 8, showZone = true }) {
+  const band = window.riskBand(p);
+  return (
+    <div className="probbar" style={{ height }}>
+      {showZone && <div className="probbar-zone" />}
+      <div className="probbar-fill" style={{ width: `${Math.min(100, p * 100)}%`, background: band.cor }} />
+    </div>
+  );
+}
+
+Object.assign(window, { Icon, ICONS, SectionTitle, Card, StatCard, Tabs, Badge, Crest, ProbBar });
+</script>
+<script type="text/babel">function Gauge({ p, size = 150 }) {
+  const band = window.riskBand(p);
+  const r = size / 2 - 14;
+  const cx = size / 2, cy = size / 2;
+  const start = Math.PI * 0.75, end = Math.PI * 2.25;
+  const a = start + (end - start) * Math.min(1, p);
+  const pol = (ang, rad) => [cx + rad * Math.cos(ang), cy + rad * Math.sin(ang)];
+  const arc = (a0, a1, rad) => {
+    const [x0, y0] = pol(a0, rad), [x1, y1] = pol(a1, rad);
+    const large = a1 - a0 > Math.PI ? 1 : 0;
+    return `M ${x0} ${y0} A ${rad} ${rad} 0 ${large} 1 ${x1} ${y1}`;
+  };
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <path d={arc(start, end, r)} fill="none" stroke="var(--surface-3)" strokeWidth="12" strokeLinecap="round" />
+      <path d={arc(start, a, r)} fill="none" stroke={band.cor} strokeWidth="12" strokeLinecap="round" />
+      <text x={cx} y={cy - 2} textAnchor="middle" className="gauge-val" style={{ fill: band.cor }}>
+        {window.fmtPct(p, 0)}
+      </text>
+      <text x={cx} y={cy + 20} textAnchor="middle" className="gauge-lbl">{band.label}</text>
+    </svg>
+  );
+}
+
+function VBars({ data, height = 320, fmt = (v) => v, color = "var(--green)", highlight = 0 }) {
+  const W = 1000, H = height, padL = 44, padB = 86, padT = 16;
+  const max = Math.max(...data.map((d) => d.value)) * 1.12;
+  const bw = (W - padL - 10) / data.length;
+  const y = (v) => padT + (H - padT - padB) * (1 - v / max);
+  const ticks = 5;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="vbars" preserveAspectRatio="xMidYMid meet">
+      {Array.from({ length: ticks + 1 }).map((_, i) => {
+        const v = (max / ticks) * i;
+        return (
+          <g key={i}>
+            <line x1={padL} x2={W - 6} y1={y(v)} y2={y(v)} stroke="var(--grid)" />
+            <text x={padL - 8} y={y(v) + 4} textAnchor="end" className="ax">{Math.round(v)}</text>
+          </g>
+        );
+      })}
+      {data.map((d, i) => {
+        const x = padL + i * bw + bw * 0.16;
+        const w = bw * 0.68;
+        const hh = (H - padT - padB) - (y(d.value) - padT);
+        return (
+          <g key={i}>
+            <rect x={x} y={y(d.value)} width={w} height={Math.max(0, hh)} rx="3"
+              fill={i === highlight ? color : "var(--bar-dim)"} />
+            <text x={x + w / 2} y={y(d.value) - 6} textAnchor="middle" className="ax-val">{fmt(d.value)}</text>
+            <text x={x + w / 2} y={H - padB + 16} textAnchor="end" className="ax-cat"
+              transform={`rotate(-40 ${x + w / 2} ${H - padB + 16})`}>{d.label}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+function LineChart({ pts, xRange, yRange = [0, 1], xLabel, color = "var(--blue)",
+  threshold = 0.5, baseX, height = 230, fill = false }) {
+  const W = 360, H = height, padL = 42, padB = 34, padT = 14, padR = 12;
+  const [x0, x1] = xRange, [y0, y1] = yRange;
+  const X = (x) => padL + (W - padL - padR) * ((x - x0) / (x1 - x0));
+  const Y = (y) => padT + (H - padT - padB) * (1 - (y - y0) / (y1 - y0));
+  const d = pts.map((p, i) => `${i ? "L" : "M"} ${X(p[0]).toFixed(1)} ${Y(p[1]).toFixed(1)}`).join(" ");
+  const area = `${d} L ${X(pts[pts.length - 1][0])} ${Y(0)} L ${X(pts[0][0])} ${Y(0)} Z`;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="linechart" preserveAspectRatio="xMidYMid meet">
+      {[0, 0.2, 0.4, 0.6, 0.8, 1].map((g) => (
+        <g key={g}>
+          <line x1={padL} x2={W - padR} y1={Y(g)} y2={Y(g)} stroke="var(--grid)" />
+          <text x={padL - 6} y={Y(g) + 4} textAnchor="end" className="ax">{Math.round(g * 100)}%</text>
+        </g>
+      ))}
+      <line x1={padL} x2={W - padR} y1={Y(threshold)} y2={Y(threshold)}
+        stroke="var(--red)" strokeDasharray="5 4" strokeWidth="1.5" opacity="0.8" />
+      {baseX != null && (
+        <g>
+          <line x1={X(baseX)} x2={X(baseX)} y1={padT} y2={H - padB} stroke="var(--muted)" strokeDasharray="3 3" />
+          <text x={X(baseX) + 4} y={padT + 10} className="ax" style={{ fontSize: 10 }}>Base</text>
+        </g>
+      )}
+      {fill && <path d={area} fill={color} opacity="0.12" />}
+      <path d={d} fill="none" stroke={color} strokeWidth="2.5" />
+      {[x0, (x0 + x1) / 2, x1].map((t, i) => (
+        <text key={i} x={X(t)} y={H - padB + 16} textAnchor="middle" className="ax">{Math.round(t)}</text>
+      ))}
+      <text x={(W + padL) / 2} y={H - 4} textAnchor="middle" className="ax-title">{xLabel}</text>
+    </svg>
+  );
+}
+
+function RocCurve({ pts, auc, size = 300 }) {
+  const W = size, H = size, pad = 38;
+  const X = (x) => pad + (W - pad * 1.4) * x;
+  const Y = (y) => H - pad - (H - pad * 1.4) * y;
+  const d = pts.map((p, i) => `${i ? "L" : "M"} ${X(p[0]).toFixed(1)} ${Y(p[1]).toFixed(1)}`).join(" ");
+  const area = `${d} L ${X(1)} ${Y(0)} Z`;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="roc" preserveAspectRatio="xMidYMid meet">
+      {[0, .25, .5, .75, 1].map((g) => (
+        <g key={g}>
+          <line x1={X(g)} x2={X(g)} y1={Y(0)} y2={Y(1)} stroke="var(--grid)" />
+          <line x1={X(0)} x2={X(1)} y1={Y(g)} y2={Y(g)} stroke="var(--grid)" />
+        </g>
+      ))}
+      <line x1={X(0)} y1={Y(0)} x2={X(1)} y2={Y(1)} stroke="var(--muted)" strokeDasharray="5 4" />
+      <path d={area} fill="var(--green)" opacity="0.12" />
+      <path d={d} fill="none" stroke="var(--green)" strokeWidth="2.5" />
+      <text x={X(0.55)} y={Y(0.25)} className="roc-auc">AUC {window.fmtNum(auc, 3)}</text>
+      <text x={W / 2} y={H - 6} textAnchor="middle" className="ax-title">Taxa de Falso Positivo</text>
+      <text x={12} y={H / 2} textAnchor="middle" className="ax-title"
+        transform={`rotate(-90 12 ${H / 2})`}>Taxa de Verdadeiro Positivo</text>
+    </svg>
+  );
+}
+
+function CalibCurve({ pts, size = 300 }) {
+  const W = size, H = size, pad = 38;
+  const X = (x) => pad + (W - pad * 1.4) * x;
+  const Y = (y) => H - pad - (H - pad * 1.4) * y;
+  const d = pts.map((p, i) => `${i ? "L" : "M"} ${X(p[0]).toFixed(1)} ${Y(p[1]).toFixed(1)}`).join(" ");
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="roc" preserveAspectRatio="xMidYMid meet">
+      {[0, .25, .5, .75, 1].map((g) => (
+        <line key={g} x1={X(g)} x2={X(g)} y1={Y(0)} y2={Y(1)} stroke="var(--grid)" />
+      ))}
+      <line x1={X(0)} y1={Y(0)} x2={X(1)} y2={Y(1)} stroke="var(--muted)" strokeDasharray="5 4" />
+      <path d={d} fill="none" stroke="var(--blue)" strokeWidth="2.5" />
+      {pts.map((p, i) => <circle key={i} cx={X(p[0])} cy={Y(p[1])} r="3.2" fill="var(--blue)" />)}
+      <text x={W / 2} y={H - 6} textAnchor="middle" className="ax-title">Probabilidade prevista</text>
+      <text x={12} y={H / 2} textAnchor="middle" className="ax-title"
+        transform={`rotate(-90 12 ${H / 2})`}>Fração observada</text>
+    </svg>
+  );
+}
+
+function Confusion({ m }) {
+  const cells = [
+    { v: m.tn, l: "Verd. Negativo", good: true },
+    { v: m.fp, l: "Falso Positivo", good: false },
+    { v: m.fn, l: "Falso Negativo", good: false },
+    { v: m.tp, l: "Verd. Positivo", good: true },
+  ];
+  const total = m.tn + m.fp + m.fn + m.tp;
+  return (
+    <div className="confusion">
+      <div className="cf-corner" />
+      <div className="cf-coltop">Previsto: Permanece</div>
+      <div className="cf-coltop">Previsto: Rebaixado</div>
+      <div className="cf-rowside">Real: Permanece</div>
+      {cells.slice(0, 2).map((c, i) => <CfCell key={i} c={c} total={total} />)}
+      <div className="cf-rowside">Real: Rebaixado</div>
+      {cells.slice(2).map((c, i) => <CfCell key={i} c={c} total={total} />)}
+    </div>
+  );
+}
+function CfCell({ c, total }) {
+  return (
+    <div className={`cf-cell ${c.good ? "cf-good" : "cf-bad"}`}
+      style={{ opacity: 0.35 + 0.65 * (c.v / total) }}>
+      <span className="cf-num">{c.v}</span>
+      <span className="cf-lbl">{c.l}</span>
+    </div>
+  );
+}
+
+function BoxRow({ stat, scaleMax, color }) {
+  const X = (v) => (v / scaleMax) * 100;
+  return (
+    <div className="boxrow">
+      <div className="box-name">{stat.v}</div>
+      <div className="box-track">
+        <div className="box-whisker" style={{ left: `${X(stat.min)}%`, width: `${X(stat.max) - X(stat.min)}%`, background: color }} />
+        <div className="box-iqr" style={{ left: `${X(stat.q1)}%`, width: `${X(stat.q3) - X(stat.q1)}%`, background: color }} />
+        <div className="box-med" style={{ left: `${X(stat.med)}%` }} />
+        <div className="box-cap" style={{ left: `${X(stat.min)}%` }} />
+        <div className="box-cap" style={{ left: `${X(stat.max)}%` }} />
+      </div>
+      <div className="box-range">{window.fmtNum(stat.min, 0)}–{window.fmtNum(stat.max, 0)}</div>
+    </div>
+  );
+}
+
+Object.assign(window, { Gauge, VBars, LineChart, RocCurve, CalibCurve, Confusion, BoxRow });
+</script>
+<script type="text/babel">const { useState, useMemo } = React;
+
+function Hero({ compact }) {
+  return (
+    <header className={`hero ${compact ? "hero-compact" : ""}`}>
+      <div className="hero-lines" />
+      <div className="hero-body">
+        <div className="hero-tag"><Icon name="target" size={15} /> Análise preditiva · Machine Learning</div>
+        <h1>Previsão de Rebaixamento<span className="hero-em"> — Brasileirão Série A 2025</span></h1>
+        <p>Regressão Logística · Leonardo Feitosa — Ciência de Dados · UFPB</p>
+      </div>
+    </header>
+  );
+}
+
+function Callout({ icon = "info", tone = "info", children, title }) {
+  return (
+    <div className={`callout callout-${tone}`}>
+      <Icon name={icon} size={18} className="callout-ic" />
+      <div>{title && <strong>{title} </strong>}{children}</div>
+    </div>
+  );
+}
+
+function SliderField({ label, icon, value, min, max, step = 1, onChange, fmt = (v) => v, hint, unit }) {
+  return (
+    <div className="field">
+      <div className="field-head">
+        <label>{icon && <Icon name={icon} size={15} />} {label}</label>
+        <span className="field-val">{fmt(value)}{unit}</span>
+      </div>
+      <input type="range" min={min} max={max} step={step} value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        style={{ "--pct": `${((value - min) / (max - min)) * 100}%` }} />
+      <div className="field-scale"><span>{fmt(min)}</span><span>{fmt(max)}</span></div>
+      {hint && <div className="field-hint">{hint}</div>}
+    </div>
+  );
+}
+
+/* ========================= PREVISÃO 2025 ========================= */
+function ScreenPrevisao() {
+  const M = window.MODEL;
+  const [nome, setNome] = useState("Meu Clube");
+  // elenco — defaults vindos das médias reais do período de treino (SENS_BASE),
+  // não de valores chutados: o plantel médio na base é ~56, não 28.
+  const _B = window.SENS_BASE || { plantel: 56, estr: 6, vm: 48 };
+  const _F = window.SENS_FAIXAS || { plantel: [41, 82], estr: [0, 17], vm: [5, 285] };
+  const [plantel, setPlantel] = useState(_B.plantel);
+  const [estr, setEstr]       = useState(_B.estr);
+  const [vm, setVm]           = useState(_B.vm);
+  // desempenho (médias históricas da liga como default)
+  const [pts, setPts]         = useState(50);
+  const [gPro, setGPro]       = useState(38);
+  const [gContra, setGContra] = useState(35);
+  const [vit, setVit]         = useState(14);
+
+  // derivados automaticamente (consistentes com o real)
+  const sg  = gPro - gContra;           // saldo de gols
+  const apr = pts / 114;                // aproveitamento (0-1): 38 jogos × 3 pts = 114
+
+  const p    = window.predictSimple(plantel, estr, vm, pts, sg, gPro, gContra, vit, apr * 100);
+  const band = window.riskBand(p);
+
+  const aprPct = Math.round(apr * 100);
+  const med = { vm: _B.vm, plantel: _B.plantel, estr: _B.estr,
+                pts: 50, sg: 3, gPro: 38, gContra: 35, vit: 14, apr: 44 };
+  const fatores = [
+    { l: "Valor de mercado",      v: vm,      ref: med.vm,      good: vm >= med.vm,          icon: "wallet",  txt: vm >= med.vm ? "acima da média" : "abaixo da média" },
+    { l: "Pontos médios",         v: pts,     ref: med.pts,     good: pts >= med.pts,         icon: "activity",txt: pts >= med.pts ? "desempenho acima da média" : "desempenho abaixo da média" },
+    { l: "Aproveitamento (auto)", v: aprPct,  ref: med.apr,     good: aprPct >= med.apr,      icon: "bars",    txt: `${aprPct}% — ${aprPct >= med.apr ? "bom" : "abaixo da média"}` },
+    { l: "Saldo de gols (auto)",  v: sg,      ref: med.sg,      good: sg >= med.sg,           icon: "target",  txt: sg >= 0 ? `+${sg} (positivo)` : `${sg} (negativo)` },
+    { l: "Gols marcados médios",  v: gPro,    ref: med.gPro,    good: gPro >= med.gPro,       icon: "up",      txt: gPro >= med.gPro ? "ataque eficiente" : "ataque abaixo da média" },
+    { l: "Gols sofridos médios",  v: gContra, ref: med.gContra, good: gContra <= med.gContra, icon: "down",    txt: gContra <= med.gContra ? "defesa sólida" : "defesa vulnerável" },
+    { l: "Vitórias médias",       v: vit,     ref: med.vit,     good: vit >= med.vit,         icon: "trophy",  txt: vit >= med.vit ? "acima da média" : "abaixo da média" },
+  ];
+
+  return (
+    <div className="screen">
+      <Hero />
+      <Callout title="Modelo." tone="info" icon="target">
+        <strong>Regressão Logística</strong> treinada com dados do Transfermarkt (2014–2022) e validada
+        em 2023–2024 — <b>acurácia {window.fmtPct(M.acuracia, 0)}</b> · <b>AUC-ROC {window.fmtNum(M.aucTeste, 3)}</b>.
+        Usa <b>15 features</b>: elenco + janelas deslizantes de desempenho (médias das últimas 3 e 5 temporadas).
+      </Callout>
+
+      <SectionTitle kicker="Ferramenta">Simulador individual de risco</SectionTitle>
+      <Callout tone="muted" icon="info">
+        <b>Versão reduzida para exploração.</b> Aqui você informa 9 indicadores e as
+        janelas de 3 e 5 temporadas recebem o mesmo valor. O <b>Ranking 2025</b> usa o
+        modelo completo, com as 15 features e o histórico real de cada clube — por isso
+        os números das duas telas não são idênticos.
+      </Callout>
+
+      <div className="sim-grid">
+        {/* coluna esquerda — inputs */}
+        <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+          <Card>
+            <div className="card-title"><Icon name="users" size={16} /> Identificação</div>
+            <div className="field">
+              <div className="field-head"><label>Nome do clube</label></div>
+              <input className="text-input" value={nome} onChange={(e) => setNome(e.target.value)} />
+            </div>
+          </Card>
+
+          <Card>
+            <div className="card-title"><Icon name="wallet" size={16} /> Dados do elenco</div>
+            <SliderField label="Tamanho do elenco" icon="users" value={plantel}
+              min={_F.plantel[0]} max={_F.plantel[1]} onChange={setPlantel} unit=" atletas"
+              hint={`Plantel registrado no Transfermarkt. Média histórica na Série A: ~${_B.plantel} atletas.`} />
+            <SliderField label="Nº de estrangeiros" icon="globe" value={estr}
+              min={_F.estr[0]} max={_F.estr[1]} onChange={setEstr}
+              hint={`Atletas não-brasileiros. Média histórica: ~${_B.estr}.`} />
+            <SliderField label="Valor de mercado total" icon="wallet" value={vm}
+              min={_F.vm[0]} max={_F.vm[1]} step={1} onChange={setVm} unit=" M€"
+              fmt={(v) => window.fmtNum(v, 0)}
+              hint={`Soma do valor de mercado do elenco (Transfermarkt). Média no treino: ~${_B.vm} M€; em 2025 os valores são bem maiores.`} />
+          </Card>
+
+          <Card>
+            <div className="card-title"><Icon name="activity" size={16} /> Desempenho histórico médio</div>
+            <div style={{ fontSize:11.5, color:"var(--faint)", marginBottom:14, lineHeight:1.5 }}>
+              Médias das últimas temporadas na Série A.
+              <b> Saldo de gols</b> e <b>aproveitamento</b> são calculados automaticamente para manter consistência com os outros valores.
+            </div>
+
+            <SliderField label="Pontos médios" icon="target" value={pts}
+              min={20} max={85} onChange={setPts} unit=" pts"
+              hint="Pontos por temporada (38 jogos). Média na Série A: ~50 pts." />
+
+            {/* valores derivados (display apenas) */}
+            <div style={{ display:"flex", gap:10, marginBottom:18 }}>
+              <div style={{ flex:1, background:"var(--surface-2)", border:"1px solid var(--border)", borderRadius:10, padding:"10px 14px" }}>
+                <div style={{ fontSize:11, color:"var(--faint)", marginBottom:4 }}>Aproveitamento (auto)</div>
+                <div style={{ fontFamily:"var(--mono)", fontSize:15, fontWeight:600, color:"var(--green)" }}>{aprPct}%</div>
+                <div style={{ fontSize:10.5, color:"var(--faint)", marginTop:3 }}>pts ÷ 114 × 100</div>
+              </div>
+              <div style={{ flex:1, background:"var(--surface-2)", border:"1px solid var(--border)", borderRadius:10, padding:"10px 14px" }}>
+                <div style={{ fontSize:11, color:"var(--faint)", marginBottom:4 }}>Saldo de gols (auto)</div>
+                <div style={{ fontFamily:"var(--mono)", fontSize:15, fontWeight:600, color: sg >= 0 ? "var(--green)" : "var(--red)" }}>{sg >= 0 ? "+" : ""}{sg}</div>
+                <div style={{ fontSize:10.5, color:"var(--faint)", marginTop:3 }}>marcados − sofridos</div>
+              </div>
+            </div>
+
+            <SliderField label="Gols marcados (média)" icon="up" value={gPro}
+              min={15} max={65} onChange={setGPro} unit=" gols"
+              hint="Gols marcados por temporada. Média: ~38." />
+            <SliderField label="Gols sofridos (média)" icon="down" value={gContra}
+              min={15} max={65} onChange={setGContra} unit=" gols"
+              hint="Gols sofridos por temporada. Média: ~35." />
+            <SliderField label="Vitórias médias" icon="trophy" value={vit}
+              min={0} max={30} onChange={setVit} unit=" vit."
+              hint="Vitórias por temporada. Média: ~14." />
+          </Card>
+        </div>
+
+        {/* coluna direita — resultado */}
+        <Card className="result-card" style={{ position:"sticky", top:16, alignSelf:"start" }}>
+          <div className="card-title"><Icon name="activity" size={16} /> Resultado da análise</div>
+          <div className="result-gauge">
+            <Gauge p={p} size={172} />
+            <div className="result-club">
+              <Crest club={{ nome, cor: band.cor }} size={22} />
+              <span>{nome || "Clube"}</span>
+            </div>
+          </div>
+          <div className="result-verdict" style={{ borderColor: band.cor }}>
+            <Badge tone={band.key === "alto" ? "danger" : band.key === "medio" ? "warn" : "ok"}>
+              {band.label}
+            </Badge>
+            <span>Probabilidade de rebaixamento estimada em <b>{window.fmtPct(p)}</b></span>
+          </div>
+          <div className="result-factors" style={{ marginTop:16 }}>
+            <div style={{ fontSize:11, color:"var(--faint)", marginBottom:8, letterSpacing:".08em", textTransform:"uppercase", fontWeight:600 }}>
+              Comparação com a média da liga
+            </div>
+            {fatores.map((f, i) => (
+              <div className="rf" key={i}>
+                <Icon name={f.icon} size={14} style={{ color: f.good ? "var(--green)" : "var(--red)", flexShrink:0 }} />
+                <span className="rf-l" style={{ fontSize:12.5 }}>{f.l}</span>
+                <span className="rf-tag" style={{ color: f.good ? "var(--green)" : "var(--red)", fontSize:11.5 }}>
+                  {f.good ? "▲" : "▼"} {f.txt}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      <Callout tone="muted" icon="info">
+        Todos os 15 parâmetros do modelo são usados. Gols sofridos e elencos numerosos sem qualidade
+        tendem a <b>aumentar</b> o risco; valor de mercado alto, pontos e aproveitamento elevados o <b>reduzem</b>.
+        Veja <b>Análise de Sensibilidade</b> para o efeito isolado de cada variável.
+      </Callout>
+    </div>
+  );
+}
+
+/* ========================= RANKING 2025 ========================= */
+function ScreenRanking() {
+  const rank = useMemo(() => window.ranking2025(), []);
+  const [sel, setSel] = useState(null);
+  const zonaCorte = 4;
+  const media = rank.reduce((a, c) => a + c.prob, 0) / rank.length;
+
+  return (
+    <div className="screen">
+      <Hero compact />
+      <SectionTitle kicker="Projeção do modelo">Ranking de risco — 20 clubes da Série A 2025</SectionTitle>
+      <Callout tone="warn" icon="flame">
+        <strong>Leitura:</strong> probabilidade individual de rebaixamento estimada pelo modelo a partir
+        do elenco e do desempenho recente de cada clube. Os <b>4 mais prováveis</b> formam a zona de
+        rebaixamento projetada (destaque em vermelho).
+      </Callout>
+
+      <div className="rank-kpis">
+        <StatCard label="Clubes analisados" value={rank.length} />
+        <StatCard label="Risco médio da liga" value={window.fmtPct(media, 1)} accent="var(--amber)" />
+        <StatCard label="Zona de rebaixamento" value={zonaCorte} unit=" clubes" accent="var(--red)" />
+        <StatCard label="Mais seguro" value={rank[rank.length - 1].nome}
+          sub={window.fmtPct(rank[rank.length - 1].prob)} accent="var(--green)" />
+      </div>
+
+      <Card pad={false} className="rank-card">
+        <div className="rank-head">
+          <span className="rk-pos">#</span>
+          <span className="rk-club">Clube</span>
+          <span className="rk-bar">Probabilidade de rebaixamento</span>
+          <span className="rk-pct">Risco</span>
+          <span className="rk-vm">VM (M€)</span>
+        </div>
+        {rank.map((c, i) => {
+          const zona = i < zonaCorte;
+          const band = window.riskBand(c.prob);
+          return (
+            <div key={c.nome}
+              className={`rank-row ${zona ? "rank-zone" : ""} ${sel === c.nome ? "rank-sel" : ""}`}
+              onClick={() => setSel(sel === c.nome ? null : c.nome)}>
+              <span className="rk-pos">
+                <span className="rk-num" style={zona ? { color: "var(--red)" } : null}>{i + 1}</span>
+              </span>
+              <span className="rk-club">
+                <Crest club={c} size={26} />
+                <span className="rk-name">{c.nome}</span>
+                {c.promovido && <Badge tone="neutral" style={{ marginLeft: 6, fontSize: 10 }}>Promovido</Badge>}
+                <span className="rk-uf">{c.uf}</span>
+              </span>
+              <span className="rk-bar"><ProbBar p={c.prob} height={10} /></span>
+              <span className="rk-pct" style={{ color: band.cor }}>{window.fmtPct(c.prob, 1)}</span>
+              <span className="rk-vm">{window.fmtNum(c.vm, 0)}</span>
+            </div>
+          );
+        })}
+        <div className="rank-corte">
+          <Icon name="scale" size={13} /> linha de corte — 4º / 5º colocado projetado
+        </div>
+      </Card>
+
+      <Callout tone="muted" icon="info">
+        Projeção ilustrativa do modelo do TCC para fins acadêmicos; não constitui aposta ou
+        previsão oficial. Probabilidades individuais — a soma não é normalizada para exatamente 4.
+      </Callout>
+    </div>
+  );
+}
+
+/* ========================= DESEMPENHO DO MODELO ========================= */
+function ScreenModelo() {
+  const M = window.MODEL, cf = window.CONFUSION;
+  const prec = cf.tp / (cf.tp + cf.fp);
+  const rec  = cf.tp / (cf.tp + cf.fn);
+  const f1   = 2 * prec * rec / (prec + rec);
+
+  return (
+    <div className="screen">
+      <Hero compact />
+      <SectionTitle kicker="Avaliação">Desempenho do modelo</SectionTitle>
+      <Callout tone="info" icon="info">
+        Em rebaixamento as classes são desbalanceadas (~20% positivos), então a <b>acurácia
+        sozinha engana</b>. Por isso reportamos <b>precisão, recall, F1, ROC e calibração</b> —
+        o <b>recall da classe "rebaixado"</b> é a métrica que mais importa.
+      </Callout>
+
+      <div className="metric-row">
+        <StatCard label="Acurácia" value={window.fmtPct(M.acuracia, 0)} sub="teste 2023–24" />
+        <StatCard label="Precisão" value={window.fmtNum(prec, 2)} sub="dos previstos, quantos caíram" accent="var(--blue)" />
+        <StatCard label="Recall (rebaixado)" value={window.fmtNum(rec, 2)} sub="dos que caíram, quantos achamos" accent="var(--green)" />
+        <StatCard label="F1-score" value={window.fmtNum(f1, 2)} sub="equilíbrio prec.×recall" accent="var(--amber)" />
+        <StatCard label="AUC-ROC" value={window.fmtNum(M.aucTeste, 3)} sub="teste" />
+        <StatCard label="AUC-ROC (CV)" value={`${window.fmtNum(M.aucCV, 3)}`}
+          sub={`± ${window.fmtNum(M.aucCVstd, 3)} · walk-forward`} />
+      </div>
+
+      <div className="chart-trio">
+        <Card>
+          <div className="card-title"><Icon name="grid" size={16} /> Matriz de confusão</div>
+          <Confusion m={cf} />
+        </Card>
+        <Card>
+          <div className="card-title"><Icon name="activity" size={16} /> Curva ROC</div>
+          <RocCurve pts={window.ROC} auc={M.aucTeste} />
+        </Card>
+        <Card>
+          <div className="card-title"><Icon name="scale" size={16} /> Calibração</div>
+          <CalibCurve pts={window.CALIB} />
+          <div className="mini-note">Pontos próximos da diagonal = probabilidades confiáveis.</div>
+        </Card>
+      </div>
+
+      <SectionTitle kicker="Comparação">Por que Regressão Logística?</SectionTitle>
+      <Card pad={false}>
+        <div className="comp-table">
+          <div className="comp-head">
+            <span>Algoritmo</span><span>AUC-ROC (CV)</span><span>AUC-ROC (teste)</span><span>Acurácia</span><span>F1</span><span>Observação</span>
+          </div>
+          {window.MODELOS_COMP.map((m) => (
+            <div key={m.sigla} className={`comp-row ${m.escolhido ? "comp-on" : ""}`}>
+              <span className="comp-name">
+                {m.escolhido && <Icon name="check" size={15} className="comp-check" />}
+                {m.nome} <em>{m.sigla}</em>
+              </span>
+              <span className="mono">{window.fmtNum(m.auc, 3)}</span>
+              <span className="mono">{window.fmtNum(m.aucTeste, 3)}</span>
+              <span className="mono">{window.fmtPct(m.acc, 0)}</span>
+              <span className="mono">{window.fmtNum(m.f1, 2)}</span>
+              <span className="comp-note">{m.nota}</span>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <SectionTitle kicker="Interpretabilidade">Coeficientes — odds ratios</SectionTitle>
+      <Callout tone="muted" icon="info">
+        Odds ratio &lt; 1 = a variável <b>reduz</b> a chance de rebaixamento; &gt; 1 = <b>aumenta</b>.
+        Barras à esquerda do 1,0 protegem; à direita, agravam.
+      </Callout>
+      <Card>
+        <div className="or-chart">
+          {window.COEFS.map((c) => {
+            const protege = c.or < 1;
+            const logOR = Math.log(c.or);
+            const span = 2.0;
+            const left = 50 + (logOR / span) * 50;
+            return (
+              <div className="or-row" key={c.feat}>
+                <span className="or-feat">{c.feat}</span>
+                <div className="or-track">
+                  <div className="or-axis" />
+                  <div className="or-bar" style={{
+                    left: protege ? `${left}%` : "50%",
+                    width: `${Math.abs(left - 50)}%`,
+                    background: protege ? "var(--green)" : "var(--red)",
+                  }} />
+                </div>
+                <span className="or-val mono" style={{ color: protege ? "var(--green)" : "var(--red)" }}>
+                  {window.fmtNum(c.or, 2)}
+                </span>
+              </div>
+            );
+          })}
+          <div className="or-axislabels"><span>protege ←</span><span>1,0</span><span>→ agrava</span></div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+Object.assign(window, { Hero, Callout, SliderField, ScreenPrevisao, ScreenRanking, ScreenModelo });
+</script>
+<script type="text/babel">/* ========================= DADOS HISTÓRICOS ========================= */
+function ScreenHistorico() {
+  const [sit, setSit] = useState(["Rebaixado", "Série A", "Top 4"]);
+  const [tab, setTab] = useState("comp");
+  const M = window.MODEL;
+
+  const toggleSit = (s) =>
+    setSit((cur) => cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]);
+
+  const vmData = (window.VM_MEDIO || []).map(([l, v]) => ({ label: l, value: v }));
+
+  return (
+    <div className="screen">
+      <Hero compact />
+      <SectionTitle kicker="Base de dados">Histórico — Brasileirão Série A</SectionTitle>
+
+      <Card className="filters">
+        <div className="card-title"><Icon name="filter" size={16} /> Filtros</div>
+        <div className="filter-grid">
+          <div className="filter-col">
+            <label>Situação</label>
+            <div className="chips">
+              {["Rebaixado", "Série A", "Top 4"].map((s) => (
+                <button key={s} className={`chip ${sit.includes(s) ? "chip-on" : ""}`} onClick={() => toggleSit(s)}>
+                  {s} {sit.includes(s) && <Icon name="x" size={12} />}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <div className="hist-kpis">
+        <StatCard label="Registros" value={M.registros} />
+        <StatCard label="Clubes únicos" value={M.clubesUnicos} />
+        <StatCard label="Temporadas" value={M.temporadas} />
+        <StatCard label="Rebaixamentos" value={M.rebaixamentos} accent="var(--red)" />
+      </div>
+
+      <Card pad={false}>
+        <div className="data-table">
+          <div className="dt-head dt-grid">
+            <span>#</span><span>Clube</span><span>Temporada</span>
+            <span>Plantel</span><span>Estr.</span><span>VM (M€)</span><span>Situação</span>
+          </div>
+          {(window.HIST_SAMPLE || []).map((r, idx) => (
+            <div className="dt-row dt-grid" key={idx}>
+              <span className="dt-mut">{idx}</span>
+              <span>{r.clube}</span>
+              <span className="mono">{r.temp}</span>
+              <span className="mono">{r.plantel}</span>
+              <span className="mono">{r.estr}</span>
+              <span className="mono">{window.fmtNum(r.vm, 2)}</span>
+              <span><Badge tone={r.sit === "Top 4" ? "ok" : r.sit === "Rebaixado" ? "danger" : "neutral"}>{r.sit}</Badge></span>
+            </div>
+          ))}
+        </div>
+        <div className="dt-footer">
+          <span className="dt-mut">Exibindo amostra de {(window.HIST_SAMPLE || []).length} de {M.registros} registros</span>
+        </div>
+      </Card>
+
+      <Tabs active={tab} onChange={setTab} tabs={[
+        { id: "comp", label: "Comparação entre clubes", icon: "bars" },
+        { id: "dist", label: "Distribuição por situação", icon: "target" },
+        { id: "evo",  label: "Evolução temporal", icon: "activity" },
+        { id: "jan",  label: "Janelas deslizantes", icon: "layers" },
+      ]} />
+
+      {tab === "comp" && (
+        <Card>
+          <div className="card-title">Top 20 clubes — VM Total médio (M€)</div>
+          <VBars data={vmData} color="var(--green)" highlight={0} fmt={(v) => window.fmtNum(v, 1)} />
+        </Card>
+      )}
+      {tab === "dist" && (
+        <Card>
+          <div className="card-title">Distribuição por situação</div>
+          <div className="dist-grid">
+            {[["Top 4", 44, "var(--green)"], ["Série A", 132, "var(--blue)"], ["Rebaixado", 44, "var(--red)"]].map(([l, v, c]) => (
+              <div className="dist-cell" key={l}>
+                <div className="dist-big" style={{ color: c }}>{v}</div>
+                <div className="dist-lbl">{l}</div>
+                <div className="dist-bar"><div style={{ width: `${(v / 220) * 100}%`, background: c }} /></div>
+                <div className="dt-mut">{window.fmtPct(v / 220, 0)} dos registros</div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+      {tab === "evo" && (
+        <Card>
+          <div className="card-title">Rebaixamentos por temporada (2014–2024)</div>
+          <VBars height={260} color="var(--red)" highlight={-1}
+            data={[2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024].map((t) => ({ label: t, value: 4 }))}
+            fmt={(v) => v} />
+          <div className="mini-note">4 clubes rebaixados por temporada — regra estável da Série A no período.</div>
+        </Card>
+      )}
+      {tab === "jan" && (
+        <Card>
+          <div className="card-title">Janelas deslizantes de desempenho</div>
+          <div className="jan-grid">
+            {(window.FEATURES.janelas || []).map((j, i) => (
+              <div className="jan-cell" key={i}><Icon name="layers" size={15} /> {j}</div>
+            ))}
+          </div>
+          <div className="mini-note">Médias móveis das últimas 3 e 5 temporadas capturam tendência recente — 12 das 15 features.</div>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+/* ========================= SENSIBILIDADE ========================= */
+function ScreenSensibilidade() {
+  const B = window.SENS_BASE;
+  // As faixas vêm dos mínimos e máximos observados na base — antes eram fixas
+  // em [15, 50] para o plantel, faixa que nem existe nos dados (real: 41–80).
+  const F = window.SENS_FAIXAS || { plantel: [41, 82], estr: [0, 17], vm: [5, 285] };
+  const curves = [
+    { name: "plantel", range: F.plantel, xLabel: "Tamanho do elenco", color: "var(--blue)", base: B.plantel, fill: false, title: "Impacto do tamanho do elenco" },
+    { name: "estr",    range: F.estr,  xLabel: "Nº de estrangeiros", color: "var(--violet)", base: B.estr, fill: false, title: "Impacto do nº de estrangeiros" },
+    { name: "vm",      range: F.vm, xLabel: "Valor de mercado (M€)", color: "var(--red)", base: B.vm,  fill: true,  title: "Impacto do valor de mercado" },
+  ];
+
+  return (
+    <div className="screen">
+      <Hero compact />
+      <SectionTitle kicker="Interpretação">Análise de sensibilidade</SectionTitle>
+      <Callout tone="info" icon="info">
+        Mostra como cada variável influencia a probabilidade de rebaixamento, mantendo as demais
+        fixas nos <b>valores médios históricos</b> (Plantel {B.plantel} · Estrangeiros {B.estr} · VM {B.vm} M€).
+      </Callout>
+
+      <div className="sens-kpis">
+        <StatCard label="Plantel base" value={B.plantel} unit=" atletas" />
+        <StatCard label="Estrangeiros base" value={B.estr} />
+        <StatCard label="Valor de mercado base" value={B.vm} unit=" M€" />
+      </div>
+
+      <div className="sens-grid">
+        {curves.map((c) => (
+          <Card key={c.name}>
+            <div className="card-title">{c.title}</div>
+            <LineChart pts={window.sensCurve(c.name, c.range)} xRange={c.range}
+              xLabel={c.xLabel} color={c.color} baseX={c.base} fill={c.fill} />
+          </Card>
+        ))}
+      </div>
+
+      <Callout tone="muted" icon="info">
+        <strong>Interpretação:</strong> curvas <i>descendentes</i> indicam que aumentar a variável
+        <b> reduz</b> o risco. O <b>valor de mercado</b> é o fator mais decisivo (queda acentuada);
+        o nº de estrangeiros tem efeito quase neutro. A linha tracejada vermelha marca o limiar de 50%.
+      </Callout>
+    </div>
+  );
+}
+
+/* ========================= DESCRITIVA ========================= */
+function ScreenDescritiva() {
+  // O seletor de temporada era um <div> decorativo com "2024" fixo — agora é um
+  // <select> real ligado a DESC_BY_SEASON, que traz todas as temporadas rotuladas.
+  const porTemporada = window.DESC_BY_SEASON || { "2024": window.DESC_2024 };
+  const temporadas = window.DESC_TEMPORADAS ||
+    Object.keys(porTemporada).sort();
+  const [ano, setAno] = useState(temporadas[temporadas.length - 1]);
+  const D = porTemporada[ano] || window.DESC_2024;
+  const [tab, setTab] = useState("stats");
+  const boxColors = ["var(--blue)", "var(--red)", "var(--green)", "var(--violet)"];
+
+  return (
+    <div className="screen">
+      <Hero compact />
+      <SectionTitle kicker="Estatística">Análise descritiva</SectionTitle>
+
+      <div className="desc-season">
+        <label htmlFor="sel-temporada">Temporada para análise</label>
+        <select
+          id="sel-temporada"
+          className="select select-sm"
+          value={ano}
+          onChange={(e) => setAno(e.target.value)}
+        >
+          {temporadas.map((t) => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="desc-kpis">
+        <StatCard label="Clubes" value={D.resumo.clubes} />
+        <StatCard label="Plantel médio" value={window.fmtNum(D.resumo.plantelMedio, 1)} unit=" atletas" />
+        <StatCard label="VM médio" value={window.fmtNum(D.resumo.vmMedio, 1)} unit=" M€" accent="var(--green)" />
+        <StatCard label="Pontos médios" value={window.fmtNum(D.resumo.ptsMedio, 1)} accent="var(--blue)" />
+      </div>
+
+      <Tabs active={tab} onChange={setTab} tabs={[
+        { id: "stats", label: "Estatísticas descritivas", icon: "bars" },
+        { id: "clube", label: "Análise por clube", icon: "search" },
+        { id: "dist",  label: "Distribuição", icon: "activity" },
+      ]} />
+
+      {tab === "stats" && (
+        <Card pad={false}>
+          <div className="stats-table">
+            <div className="st-head st-grid">
+              <span>Variável</span><span>N</span><span>Média</span><span>Desv.Pad.</span>
+              <span>Mín</span><span>Q1</span><span>Mediana</span><span>Q3</span><span>Máx</span>
+            </div>
+            {D.stats.map((s) => (
+              <div className="st-row st-grid" key={s.v}>
+                <span className="st-name">{s.v}</span>
+                <span className="mono">{s.n}</span>
+                <span className="mono">{window.fmtNum(s.media, 2)}</span>
+                <span className="mono">{window.fmtNum(s.std, 2)}</span>
+                <span className="mono">{window.fmtNum(s.min, 1)}</span>
+                <span className="mono">{window.fmtNum(s.q1, 2)}</span>
+                <span className="mono">{window.fmtNum(s.med, 1)}</span>
+                <span className="mono">{window.fmtNum(s.q3, 2)}</span>
+                <span className="mono">{window.fmtNum(s.max, 1)}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {tab === "clube" && (
+        <Card pad={false}>
+          <div className="data-table">
+            <div className="dt-head clube-grid">
+              <span>Clube</span><span>Plantel</span><span>Estr.</span><span>VM (M€)</span><span>Pontos</span>
+            </div>
+            {D.clubes.map((c) => (
+              <div className="dt-row clube-grid" key={c.clube}>
+                <span className="dt-club">
+                  <Crest club={window.CLUBES_2025.find(x => x.nome === c.clube) || { nome: c.clube, cor: "#555" }} size={22} />
+                  {" "}{c.clube}
+                </span>
+                <span className="mono">{c.plantel}</span>
+                <span className="mono">{c.estr}</span>
+                <span className="mono">{window.fmtNum(c.vm, 2)}</span>
+                <span className="mono st-pts">{c.pts}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {tab === "dist" && (
+        <Card>
+          <div className="card-title">Distribuição das variáveis — 2024</div>
+          <div className="boxplots">
+            {D.stats.map((s, i) => (
+              <BoxRow key={s.v} stat={s} color={boxColors[i]}
+                scaleMax={s.v === "VM Total (M€)" ? 220 : s.max * 1.1} />
+            ))}
+          </div>
+          <div className="mini-note">Caixa = intervalo interquartil (Q1–Q3) · linha central = mediana · hastes = mín/máx.</div>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+Object.assign(window, { ScreenHistorico, ScreenSensibilidade, ScreenDescritiva });
+</script>
+<script type="text/babel">const NAV = [
+  { id: "previsao",  label: "Previsão 2025",        icon: "target",  screen: "ScreenPrevisao" },
+  { id: "ranking",   label: "Ranking 2025",          icon: "trophy",  screen: "ScreenRanking" },
+  { id: "modelo",    label: "Desempenho do Modelo",  icon: "activity",screen: "ScreenModelo" },
+  { id: "historico", label: "Dados Históricos",      icon: "history", screen: "ScreenHistorico" },
+  { id: "sensib",    label: "Análise de Sensibilidade", icon: "sliders", screen: "ScreenSensibilidade" },
+  { id: "descritiva",label: "Análise Descritiva",    icon: "bars",    screen: "ScreenDescritiva" },
+];
+
+function ModelMini() {
+  const M = window.MODEL;
+  const rows = [
+    ["Algoritmo", "Reg. Logística"],
+    ["Treino", M.treino],
+    ["Teste", M.teste],
+    ["Acurácia (teste)", window.fmtPct(M.acuracia, 0)],
+    ["AUC-ROC (teste)", window.fmtNum(M.aucTeste, 3)],
+    ["AUC-ROC (CV)", `${window.fmtNum(M.aucCV, 3)} ± ${window.fmtNum(M.aucCVstd, 3)}`],
+    ["Validação", M.validacao],
+    ["Modelos testados", M.modelosTestados.join(" · ")],
+  ];
+  return (
+    <div className="model-mini">
+      <div className="mm-title">Sobre o modelo</div>
+      {rows.map(([k, v]) => (
+        <div className="mm-row" key={k}><span>{k}</span><b>{v}</b></div>
+      ))}
+      <div className="mm-feat">
+        <div className="mm-feat-h"><Icon name="layers" size={13} /> 15 features</div>
+        <div className="mm-feat-tags">
+          <span><Icon name="users" size={12} /> Plantel</span>
+          <span><Icon name="globe" size={12} /> Estrangeiros</span>
+          <span><Icon name="wallet" size={12} /> Valor de mercado</span>
+          <span><Icon name="layers" size={12} /> 12 janelas</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Sidebar({ active, onNav, open, setOpen }) {
+  return (
+    <>
+      <aside className={`sidebar ${open ? "" : "sb-closed"}`}>
+        <div className="sb-brand">
+          <span className="sb-logo"><Icon name="shield" size={20} /></span>
+          <div>
+            <div className="sb-title">Série A 2025</div>
+            <div className="sb-sub">Previsão de Rebaixamento</div>
+          </div>
+          <button className="sb-close" onClick={() => setOpen(false)}><Icon name="x" size={18} /></button>
+        </div>
+
+        <nav className="sb-nav">
+          <div className="sb-navlabel">Navegação</div>
+          {NAV.map((n) => (
+            <button key={n.id} className={`nav-item ${active === n.id ? "nav-on" : ""}`} onClick={() => onNav(n.id)}>
+              <span className="nav-dot" />
+              <Icon name={n.icon} size={17} />
+              <span className="nav-label">{n.label}</span>
+              {n.novo && <span className="nav-new">novo</span>}
+            </button>
+          ))}
+        </nav>
+
+        <ModelMini />
+        <div className="sb-foot">TCC · Leonardo Feitosa · Ciência de Dados – UFPB · 2025</div>
+      </aside>
+      {!open && (
+        <button className="sb-open" onClick={() => setOpen(true)}><Icon name="grid" size={18} /></button>
+      )}
+    </>
+  );
+}
+
+function App() {
+  const [active, setActive] = React.useState("previsao");
+  const [open, setOpen] = React.useState(true);
+  const nav = NAV.find((n) => n.id === active);
+  const Screen = window[nav.screen];
+
+  const go = (id) => { setActive(id); window.scrollTo({ top: 0 }); };
+
+  return (
+    <div className={`app ${open ? "" : "app-wide"}`}>
+      <Sidebar active={active} onNav={go} open={open} setOpen={setOpen} />
+      <main className="main">
+        <Screen key={active} />
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

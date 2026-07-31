@@ -5,9 +5,9 @@ Lê o modelo treinado, computa todos os dados reais e gera
 previsao_rebaixamento.html — arquivo único, auto-contido,
 idêntico ao protótipo mas com dados reais.
 
-Uso:
-    python gerar_app_real.py
-    # depois abra previsao_rebaixamento.html no navegador
+Uso (de qualquer diretório):
+    python scripts/gerar_app_real.py
+    # depois abra previsao_rebaixamento.html (na raiz) no navegador
 """
 
 import os, sys, json, math
@@ -15,7 +15,13 @@ import numpy as np
 import pandas as pd
 import joblib
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Este script vive em scripts/, mas lê JSX de prototipo/app, grava o HTML na
+# raiz e depende de app.utils.processamento, que resolve "dados/" e "modelos/"
+# relativo ao diretório de trabalho. Por isso fixamos a raiz do projeto aqui —
+# assim o script roda igual sendo chamado de onde for.
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, RAIZ)
+os.chdir(RAIZ)
 
 from sklearn.metrics import (
     confusion_matrix, roc_curve, auc as sk_auc,
@@ -184,39 +190,81 @@ def gerar():
                             .head(20))
     vm_medio_js = [[str(k), round(float(v), 1)] for k, v in vm_medio.items()]
 
-    # ── Descritiva 2024 ─────────────────────────────────────────────────────
-    df_24 = df_full[df_full["Temporada"] == 2024].copy()
+    # ── Descritiva por temporada (2014–2024) ────────────────────────────────
+    # Antes só 2024 era exportado, o que deixava o seletor de temporada da tela
+    # de análise descritiva sem dados para trocar. Agora todas as temporadas
+    # rotuladas vão para o app.
     num_cols = {
         "Plantel": "Tamanho do plantel",
         "Estrangeiros": "Nº de estrangeiros",
         "Valor de Mercado Total": "VM Total (M€)",
         "Pontos": "Pontos",
     }
-    stats_2024 = []
-    for col, label in num_cols.items():
-        if col not in df_24.columns:
-            continue
-        s = df_24[col].dropna()
-        if len(s) == 0:
-            continue
-        stats_2024.append({
-            "v": label, "n": int(len(s)),
-            "media": round(float(s.mean()), 2), "std": round(float(s.std()), 2),
-            "min": round(float(s.min()), 1), "q1": round(float(s.quantile(0.25)), 2),
-            "med": round(float(s.median()), 1), "q3": round(float(s.quantile(0.75)), 2),
-            "max": round(float(s.max()), 1),
-        })
-    clubes_2024 = []
-    for _, row in df_24.sort_values("Pontos", ascending=False).head(10).iterrows():
-        clubes_2024.append({
-            "clube":   str(row["Clube"]),
-            "plantel": int(row.get("Plantel", 0) or 0),
-            "estr":    int(row.get("Estrangeiros", 0) or 0),
-            "vm":      round(float(row.get("Valor de Mercado Total", 0) or 0), 2),
-            "pts":     int(row.get("Pontos", 0) or 0),
-        })
-    vm_med_24 = float(df_24["Valor de Mercado Total"].mean()) if "Valor de Mercado Total" in df_24.columns else 0
-    pts_med_24 = float(df_24["Pontos"].mean()) if "Pontos" in df_24.columns else 0
+
+    def _descritiva(df_ano):
+        stats = []
+        for col, label in num_cols.items():
+            if col not in df_ano.columns:
+                continue
+            s = df_ano[col].dropna()
+            if len(s) == 0:
+                continue
+            stats.append({
+                "v": label, "n": int(len(s)),
+                "media": round(float(s.mean()), 2), "std": round(float(s.std()), 2),
+                "min": round(float(s.min()), 1), "q1": round(float(s.quantile(0.25)), 2),
+                "med": round(float(s.median()), 1), "q3": round(float(s.quantile(0.75)), 2),
+                "max": round(float(s.max()), 1),
+            })
+        clubes = []
+        ordem = "Pontos" if "Pontos" in df_ano.columns else "Clube"
+        for _, row in df_ano.sort_values(ordem, ascending=False).head(10).iterrows():
+            clubes.append({
+                "clube":   str(row["Clube"]),
+                "plantel": int(row.get("Plantel", 0) or 0),
+                "estr":    int(row.get("Estrangeiros", 0) or 0),
+                "vm":      round(float(row.get("Valor de Mercado Total", 0) or 0), 2),
+                "pts":     int(row.get("Pontos", 0) or 0),
+            })
+        return {
+            "resumo": {
+                "clubes": int(df_ano["Clube"].nunique()),
+                "plantelMedio": round(float(df_ano["Plantel"].mean()), 1)
+                if "Plantel" in df_ano.columns else 0,
+                "vmMedio": round(float(df_ano["Valor de Mercado Total"].mean()), 1)
+                if "Valor de Mercado Total" in df_ano.columns else 0,
+                "ptsMedio": round(float(df_ano["Pontos"].mean()), 1)
+                if "Pontos" in df_ano.columns else 0,
+            },
+            "stats": stats,
+            "clubes": clubes,
+        }
+
+    temporadas_desc = sorted(int(t) for t in df_full["Temporada"].unique() if t < 2025)
+    desc_por_temporada = {
+        str(t): _descritiva(df_full[df_full["Temporada"] == t].copy())
+        for t in temporadas_desc
+    }
+    df_24 = df_full[df_full["Temporada"] == 2024].copy()
+
+    # ── Ponto-base do simulador e da análise de sensibilidade ───────────────
+    # ATENÇÃO: estes valores eram fixos em plantel=28, estr=4, vm=85 e não
+    # correspondiam aos dados — o plantel médio real é ~56 (mín. 41, máx. 80).
+    # Com 28, todas as simulações caíam ~3,8 desvios abaixo da média, o que
+    # subestimava o risco (nunca chegava a 50%) e invertia a leitura do efeito
+    # do tamanho do elenco. Agora vêm da própria base de treino do scaler.
+    df_treino_base = df_full[df_full["Temporada"] <= 2022]
+    sens_base = {
+        "plantel": round(float(df_treino_base["Plantel"].mean()), 0),
+        "estr": round(float(df_treino_base["Estrangeiros"].mean()), 0),
+        "vm": round(float(df_treino_base["Valor de Mercado Total"].mean()), 0),
+    }
+    faixas = {
+        "plantel": [int(df_full["Plantel"].min()), int(df_full["Plantel"].max())],
+        "estr": [int(df_full["Estrangeiros"].min()), int(df_full["Estrangeiros"].max())],
+        "vm": [5, int(df_full["Valor de Mercado Total"].max()) + 10],
+    }
+    print(f'[base do simulador] {sens_base}   faixas: {faixas}')
 
     # ── Walk-forward AUC-ROC (notebooks) ────────────────────────────────────
     WF_AUC_CV  = 0.794
@@ -268,11 +316,11 @@ window.CALIB = {json.dumps(calib_pts)};
 window.CLUBES_2025 = {json.dumps(clubes_2025_js, ensure_ascii=False)};
 window.HIST_SAMPLE = {json.dumps(hist_sample, ensure_ascii=False)};
 window.VM_MEDIO = {json.dumps(vm_medio_js, ensure_ascii=False)};
-window.DESC_2024 = {{
-  resumo:{{clubes:{len(df_24)},plantelMedio:{round(float(df_24['Plantel'].mean()) if 'Plantel' in df_24.columns else 0,1)},vmMedio:{round(vm_med_24,1)},ptsMedio:{round(pts_med_24,1)}}},
-  stats:{json.dumps(stats_2024, ensure_ascii=False)},
-  clubes:{json.dumps(clubes_2024, ensure_ascii=False)},
-}};
+window.DESC_BY_SEASON = {json.dumps(desc_por_temporada, ensure_ascii=False)};
+window.DESC_TEMPORADAS = {json.dumps([str(t) for t in temporadas_desc])};
+/* compatibilidade com a versão anterior da tela */
+window.DESC_2024 = window.DESC_BY_SEASON["2024"];
+window.SENS_FAIXAS = {json.dumps(faixas)};
 """
 
     model_js = f"""
@@ -313,9 +361,13 @@ window.predictProb = function(c) {{
   return 1 / (1 + Math.exp(-logit));
 }};
 
-/* predictSimple: recebe todos os inputs do simulador (apr em %, converte para decimal) */
+/* predictSimple: recebe os inputs do simulador. O aproveitamento entra em
+   PERCENTUAL (0-100), que é a escala da base de treino (média 47,1 · dp 7,9).
+   BUG CORRIGIDO: antes havia um "apr / 100" aqui, que enviava 0,175 no lugar
+   de 17,5 — cerca de 5,9 desvios abaixo da média. Como os dois coeficientes de
+   aproveitamento são positivos, isso subtraía ~4,3 do log-odds e fazia o
+   simulador devolver risco baixo mesmo com todos os indicadores no pior valor. */
 window.predictSimple = function(plantel, estr, vm, pts, sg, gPro, gContra, vit, apr) {{
-  var aprDec = (apr != null) ? apr / 100 : null;
   return window.predictProb({{
     plantel: plantel, estr: estr, vm: vm,
     pts3: pts,  pts5: pts,
@@ -323,7 +375,7 @@ window.predictSimple = function(plantel, estr, vm, pts, sg, gPro, gContra, vit, 
     gPro3: gPro,    gPro5: gPro,
     gContra3: gContra, gContra5: gContra,
     vit3: vit,  vit5: vit,
-    apr3: aprDec, apr5: aprDec,
+    apr3: apr, apr5: apr,
   }});
 }};
 
@@ -338,7 +390,9 @@ window.ranking2025 = function() {{
   return window.CLUBES_2025.slice().sort(function(a,b){{return b.prob - a.prob;}});
 }};
 
-window.SENS_BASE = {{plantel:28, estr:4, vm:85}};
+/* Médias reais do período de treino (2014–2022) — não usar valores chutados:
+   o scaler foi ajustado nesse período, então é aqui que o modelo está "centrado". */
+window.SENS_BASE = {{plantel:{sens_base['plantel']:.0f}, estr:{sens_base['estr']:.0f}, vm:{sens_base['vm']:.0f}}};
 
 window.sensCurve = function(varName, range) {{
   var pts = [];
@@ -362,7 +416,7 @@ window.fmtNum = function(n, d) {{
 """
 
     # ── Ler arquivos JSX ────────────────────────────────────────────────────
-    jsxdir = os.path.join(os.path.dirname(__file__), "prototipo", "app")
+    jsxdir = os.path.join(RAIZ, "prototipo", "app")
     def read_jsx(name):
         with open(os.path.join(jsxdir, name), encoding="utf-8") as f:
             return f.read()
@@ -621,7 +675,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 </body>
 </html>"""
 
-    out_path = os.path.join(os.path.dirname(__file__), "previsao_rebaixamento.html")
+    out_path = os.path.join(RAIZ, "previsao_rebaixamento.html")
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(html)
 

@@ -30,6 +30,8 @@ need_gen = not os.path.exists(HTML_PATH)
 
 if need_gen:
     with st.spinner("Gerando app com dados reais do modelo..."):
+        # o gerador vive em scripts/ desde a refatoração da estrutura
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts"))
         from gerar_app_real import gerar
         gerar()
 

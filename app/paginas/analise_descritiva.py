@@ -42,7 +42,9 @@ def main():
     # ── Seletor de temporada ──────────────────────────────────────────────────
     col_sel, _ = st.columns([1, 3])
     with col_sel:
-        sel_ano = st.selectbox("Temporada para análise:", temporadas, index=len(temporadas) - 1)
+        # key explícita: sem ela o widget pode voltar ao default a cada rerun
+        sel_ano = st.selectbox("Temporada para análise:", temporadas,
+                               index=len(temporadas) - 1, key="sel_ano_descritiva")
 
     df_ano = df[df["Temporada"] == sel_ano]
 

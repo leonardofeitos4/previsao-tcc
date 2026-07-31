@@ -1,0 +1,9 @@
+\babel@toc {brazil}{}\relax 
+\contentsline {figure}{\numberline {1}{\ignorespaces Matriz de correlação entre as \textit {features}}}{14}{figure.caption.7}%
+\contentsline {figure}{\numberline {2}{\ignorespaces Curvas ROC dos quatro modelos no teste}}{18}{figure.caption.12}%
+\contentsline {figure}{\numberline {3}{\ignorespaces Comparação das métricas entre os modelos}}{19}{figure.caption.13}%
+\contentsline {figure}{\numberline {4}{\ignorespaces Matrizes de confusão dos quatro modelos}}{19}{figure.caption.14}%
+\contentsline {figure}{\numberline {5}{\ignorespaces Curva de calibração da Regressão Logística}}{20}{figure.caption.16}%
+\contentsline {figure}{\numberline {6}{\ignorespaces Importância das \textit {features} (RL e LightGBM)}}{21}{figure.caption.17}%
+\contentsline {figure}{\numberline {7}{\ignorespaces Ranking de risco de rebaixamento --- 2025}}{24}{figure.caption.19}%
+\contentsline {figure}{\numberline {8}{\ignorespaces Mapa de calor longitudinal do risco (2016--2025)}}{27}{figure.caption.21}%

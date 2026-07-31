@@ -1,0 +1,10 @@
+\babel@toc {brazil}{}\relax 
+\contentsline {table}{\numberline {1}{\ignorespaces Descrição das 15 \textit {features}}}{13}{table.caption.5}%
+\contentsline {table}{\numberline {2}{\ignorespaces Estatísticas descritivas das \textit {features}}}{14}{table.caption.6}%
+\contentsline {table}{\numberline {3}{\ignorespaces Configuração dos \textit {folds} \textit {walk-forward}}}{15}{table.caption.8}%
+\contentsline {table}{\numberline {4}{\ignorespaces AUC-ROC por \textit {fold} \textit {walk-forward}}}{16}{table.caption.9}%
+\contentsline {table}{\numberline {5}{\ignorespaces Hiperparâmetros selecionados}}{17}{table.caption.10}%
+\contentsline {table}{\numberline {6}{\ignorespaces Ranqueamento dos modelos no teste}}{18}{table.caption.11}%
+\contentsline {table}{\numberline {7}{\ignorespaces Relatório de classificação da Regressão Logística}}{19}{table.caption.15}%
+\contentsline {table}{\numberline {8}{\ignorespaces Ranking de risco previsto para 2025}}{23}{table.caption.18}%
+\contentsline {table}{\numberline {9}{\ignorespaces Validação retroativa da previsão 2025}}{25}{table.caption.20}%

@@ -115,10 +115,13 @@ function ScreenHistorico() {
 /* ========================= SENSIBILIDADE ========================= */
 function ScreenSensibilidade() {
   const B = window.SENS_BASE;
+  // As faixas vêm dos mínimos e máximos observados na base — antes eram fixas
+  // em [15, 50] para o plantel, faixa que nem existe nos dados (real: 41–80).
+  const F = window.SENS_FAIXAS || { plantel: [41, 82], estr: [0, 17], vm: [5, 285] };
   const curves = [
-    { name: "plantel", range: [15, 50], xLabel: "Tamanho do elenco", color: "var(--blue)", base: B.plantel, fill: false, title: "Impacto do tamanho do elenco" },
-    { name: "estr",    range: [0, 15],  xLabel: "Nº de estrangeiros", color: "var(--violet)", base: B.estr, fill: false, title: "Impacto do nº de estrangeiros" },
-    { name: "vm",      range: [5, 300], xLabel: "Valor de mercado (M€)", color: "var(--red)", base: B.vm,  fill: true,  title: "Impacto do valor de mercado" },
+    { name: "plantel", range: F.plantel, xLabel: "Tamanho do elenco", color: "var(--blue)", base: B.plantel, fill: false, title: "Impacto do tamanho do elenco" },
+    { name: "estr",    range: F.estr,  xLabel: "Nº de estrangeiros", color: "var(--violet)", base: B.estr, fill: false, title: "Impacto do nº de estrangeiros" },
+    { name: "vm",      range: F.vm, xLabel: "Valor de mercado (M€)", color: "var(--red)", base: B.vm,  fill: true,  title: "Impacto do valor de mercado" },
   ];
 
   return (
@@ -157,7 +160,13 @@ function ScreenSensibilidade() {
 
 /* ========================= DESCRITIVA ========================= */
 function ScreenDescritiva() {
-  const D = window.DESC_2024;
+  // O seletor de temporada era um <div> decorativo com "2024" fixo — agora é um
+  // <select> real ligado a DESC_BY_SEASON, que traz todas as temporadas rotuladas.
+  const porTemporada = window.DESC_BY_SEASON || { "2024": window.DESC_2024 };
+  const temporadas = window.DESC_TEMPORADAS ||
+    Object.keys(porTemporada).sort();
+  const [ano, setAno] = useState(temporadas[temporadas.length - 1]);
+  const D = porTemporada[ano] || window.DESC_2024;
   const [tab, setTab] = useState("stats");
   const boxColors = ["var(--blue)", "var(--red)", "var(--green)", "var(--violet)"];
 
@@ -167,8 +176,17 @@ function ScreenDescritiva() {
       <SectionTitle kicker="Estatística">Análise descritiva</SectionTitle>
 
       <div className="desc-season">
-        <label>Temporada para análise</label>
-        <div className="select select-sm"><span>2024</span><Icon name="chevron" size={16} /></div>
+        <label htmlFor="sel-temporada">Temporada para análise</label>
+        <select
+          id="sel-temporada"
+          className="select select-sm"
+          value={ano}
+          onChange={(e) => setAno(e.target.value)}
+        >
+          {temporadas.map((t) => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </select>
       </div>
 
       <div className="desc-kpis">

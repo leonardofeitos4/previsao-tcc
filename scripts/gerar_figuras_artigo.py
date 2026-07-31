@@ -48,7 +48,7 @@ ROTULOS = {'Regressao Logistica': 'Regressão Logística'}
 def salvar(fig, nome):
     for d in DIR_FIGS:
         os.makedirs(d, exist_ok=True)
-        fig.savefig(os.path.join(d, nome), dpi=200, bbox_inches='tight')
+        fig.savefig(os.path.join(d, nome), dpi=300, bbox_inches='tight')
     plt.close(fig)
     print(f'✓ {nome}')
 
