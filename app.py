@@ -6,7 +6,9 @@ import os, sys
 import streamlit as st
 import streamlit.components.v1 as components
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, BASE_DIR)
+sys.path.insert(0, os.path.join(BASE_DIR, "scripts"))
 
 st.set_page_config(
     page_title="Previsão Rebaixamento · Série A 2025",
